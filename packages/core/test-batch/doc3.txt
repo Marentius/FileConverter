@@ -1,0 +1,16 @@
+Test Dokument 3
+
+Dette er et test-dokument i ren tekst-format.
+
+Innhold:
+- Enkel tekst
+- Ingen formatering
+- Lesbar for alle systemer
+
+Kode-eksempel:
+function test() {
+    return "Hello World";
+}
+
+Konklusjon:
+Dette dokumentet brukes til testing av batch-konvertering.
