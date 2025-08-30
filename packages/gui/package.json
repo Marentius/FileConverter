@@ -7,7 +7,8 @@
       "dev": "vite",
       "build": "tsc && vite build",
       "preview": "vite preview",
-      "tauri": "tauri"
+      "tauri": "tauri",
+      "test": "echo \"No tests specified for GUI package\" && exit 0"
     },
     "dependencies": {
       "@fileconverter/core": "file:../core",
