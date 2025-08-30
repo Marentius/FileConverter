@@ -1,10 +1,10 @@
 # FileConverter 🔄
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js CI](https://github.com/your-username/FileConverter/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/FileConverter/actions/workflows/ci.yml)
-[![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](https://github.com/your-username/FileConverter)
+[![Node.js CI](https://github.com/Marentius/FileConverter/actions/workflows/ci.yml/badge.svg)](https://github.com/Marentius/FileConverter/actions/workflows/ci.yml)
+[![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](https://github.com/Marentius/FileConverter)
 
-**Universal file conversion tool with batch support** - From HEIC→PNG to DOCX→PDF, with OCR, preset system and modern GUI.
+**Universal file conversion tool with batch support**
 
 ## ✨ Features
 
@@ -45,7 +45,7 @@
 
 ```bash
 # Clone the project
-git clone https://github.com/your-username/FileConverter.git
+git clone https://github.com/Marentius/FileConverter.git
 cd FileConverter
 
 # Install root dependencies
@@ -70,7 +70,7 @@ npm link
 
 ```bash
 # Clone and setup everything automatically
-git clone https://github.com/marentius/FileConverter.git
+git clone https://github.com/Marentius/FileConverter.git
 cd FileConverter
 npm run setup
 ```
