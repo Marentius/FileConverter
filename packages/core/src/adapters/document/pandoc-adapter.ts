@@ -31,37 +31,47 @@ export class PandocAdapter extends BaseAdapter {
     try {
       this.validateParameters(parameters);
       
-      logger.debug(`Pandoc adapter: Starter konvertering`, {
+
+      logger.debug(`Pandoc adapter: Starting conversion`, {
         input: plan.inputPath,
         output: plan.outputPath,
         parameters
       });
 
-      // Sjekk om Pandoc er tilgjengelig
+      // Check if Pandoc is available
       const pandocTools = await this.detector.detectPandocTools();
       if (!pandocTools.pandoc.found) {
-        throw new Error(pandocTools.pandoc.error || 'Pandoc ikke funnet');
+        throw new Error(pandocTools.pandoc.error || 'Pandoc not found');
       }
 
-      // Opprett output-mappe hvis den ikke eksisterer
+      // Create output directory if it doesn't exist
       const outputDir = path.dirname(plan.outputPath);
       if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
       }
 
-      // Hent original filstørrelse
+      // Delete existing output file if it exists to avoid permission denied errors
+      if (fs.existsSync(plan.outputPath)) {
+        try {
+          fs.unlinkSync(plan.outputPath);
+        } catch (error) {
+          logger.warn(`Could not delete existing output file: ${plan.outputPath}`, { error });
+        }
+      }
+
+      // Get original file size
       const originalSize = fs.statSync(plan.inputPath).size;
 
       let result: ConversionResult;
 
-      // Bestem konverteringsmetode basert på input/output formater
+      // Determine conversion method based on input/output formats
       if (plan.outputFormat === 'pdf') {
         result = await this.convertToPdf(plan.inputPath, plan.outputPath, pandocTools);
       } else {
         result = await this.convertToOther(plan.inputPath, plan.outputPath, plan.outputFormat, pandocTools);
       }
 
-      // Legg til original størrelse i metadata
+      // Add original size to metadata
       if (result.success && result.metadata) {
         result.metadata.originalSize = originalSize;
         if (fs.existsSync(plan.outputPath)) {
@@ -75,7 +85,7 @@ export class PandocAdapter extends BaseAdapter {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
       
-      logger.error(`Pandoc adapter: Konvertering feilet`, {
+      logger.error(`Pandoc adapter: Conversion failed`, {
         input: plan.inputPath,
         output: plan.outputPath,
         error: errorMessage,
@@ -102,25 +112,25 @@ export class PandocAdapter extends BaseAdapter {
       const pandocPath = pandocTools.pandoc.path!;
       const hasLaTeX = pandocTools.latex.found;
 
-      // Bygg Pandoc-kommando for PDF
+      // Build Pandoc command for PDF
       const args = [
         inputPath,
         '-o', outputPath
       ];
 
-      // Legg til LaTeX-spesifikke innstillinger hvis tilgjengelig
+      // Add LaTeX-specific settings if available
       if (hasLaTeX) {
         args.push('--pdf-engine=pdflatex');
-        logger.debug('Bruker LaTeX for høy kvalitet PDF');
+        logger.debug('Using LaTeX for high-quality PDF');
       } else {
-        // Prøv å bruke standard PDF-motor (printer) eller gi tydelig feilmelding
-        logger.warn('LaTeX ikke tilgjengelig, prøver standard PDF-motor');
-        // Ikke spesifiser --pdf-engine, la Pandoc velge standard
+        // Try to use standard PDF engine (printer) or give a clear error message
+        logger.warn('LaTeX not available, trying standard PDF engine');
+        // Do not specify --pdf-engine, let Pandoc choose the standard
       }
 
       const command = `"${pandocPath}" ${args.join(' ')}`;
       
-      logger.debug('Kjører Pandoc PDF-kommando', { 
+      logger.debug('Running Pandoc PDF command', { 
         command,
         pandocPath,
         args,
@@ -128,7 +138,7 @@ export class PandocAdapter extends BaseAdapter {
       });
       
       const { stdout, stderr } = await execAsync(command, {
-        timeout: 120000, // 2 minutter timeout
+        timeout: 120000, // 2 minute timeout
         maxBuffer: 1024 * 1024 // 1MB buffer
       });
 
@@ -139,7 +149,7 @@ export class PandocAdapter extends BaseAdapter {
       const duration = Date.now() - startTime;
       const outputSize = fs.existsSync(outputPath) ? fs.statSync(outputPath).size : 0;
 
-      logger.debug(`Pandoc PDF-konvertering fullført`, {
+      logger.debug(`Pandoc PDF conversion finished`, {
         input: inputPath,
         output: outputPath,
         duration,
@@ -160,7 +170,7 @@ export class PandocAdapter extends BaseAdapter {
 
     } catch (error) {
       const duration = Date.now() - startTime;
-      throw new Error(`Pandoc PDF-konvertering feilet: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Pandoc PDF conversion failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -175,24 +185,24 @@ export class PandocAdapter extends BaseAdapter {
     try {
       const pandocPath = pandocTools.pandoc.path!;
 
-      // Bygg Pandoc-kommando for andre formater
+      // Build Pandoc command for other formats
       const args = [
         inputPath,
         '-o', outputPath
       ];
 
-      // Legg til formater-spesifikke innstillinger
+      // Add format-specific settings
       if (outputFormat === 'docx') {
-        // Ikke bruk --reference-doc hvis vi ikke har en mal
-        logger.debug('Konverterer til DOCX uten referansemal');
+        // Do not use --reference-doc if we don't have a template
+        logger.debug('Converting to DOCX without template');
       } else if (outputFormat === 'html') {
-        args.push('--standalone'); // Generer komplett HTML
-        // Ikke bruk --css hvis vi ikke har en CSS-fil
+        args.push('--standalone'); // Generate complete HTML
+        // Do not use --css if we don't have a CSS file
       }
 
       const command = `"${pandocPath}" ${args.join(' ')}`;
       
-      logger.debug('Kjører Pandoc konvertering', { 
+      logger.debug('Running Pandoc conversion', { 
         command,
         pandocPath,
         args,
@@ -200,7 +210,7 @@ export class PandocAdapter extends BaseAdapter {
       });
       
       const { stdout, stderr } = await execAsync(command, {
-        timeout: 60000, // 60 sekunder timeout
+        timeout: 60000, // 60 second timeout
         maxBuffer: 1024 * 1024 // 1MB buffer
       });
 
@@ -211,7 +221,7 @@ export class PandocAdapter extends BaseAdapter {
       const duration = Date.now() - startTime;
       const outputSize = fs.existsSync(outputPath) ? fs.statSync(outputPath).size : 0;
 
-      logger.debug(`Pandoc konvertering fullført`, {
+      logger.debug(`Pandoc conversion finished`, {
         input: inputPath,
         output: outputPath,
         outputFormat,
@@ -231,14 +241,14 @@ export class PandocAdapter extends BaseAdapter {
 
     } catch (error) {
       const duration = Date.now() - startTime;
-      throw new Error(`Pandoc konvertering feilet: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Pandoc conversion failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
   validateParameters(parameters: ConversionParameters): void {
     super.validateParameters(parameters);
     
-    // Pandoc-spesifikke valideringer kan legges til her
+    // Pandoc-specific validations can be added here
   }
 
   async checkAvailability(): Promise<boolean> {

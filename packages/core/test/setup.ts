@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 
-// Opprett test-mapper hvis de ikke eksisterer
+// Create test directories if they don't exist
 const testDirs = [
   'test-output',
   'test-temp',
@@ -15,26 +15,16 @@ testDirs.forEach(dir => {
       fs.mkdirSync(dirPath, { recursive: true });
     }
   } catch (error) {
-    console.warn(`Kunne ikke opprette mappe ${dirPath}:`, error);
+    console.warn(`Could not create directory ${dirPath}:`, error);
   }
 });
-
-// Mock console.log for renere test-output (kun i test-miljø)
-if (typeof jest !== 'undefined') {
-  global.console = {
-    ...console,
-    log: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  };
-}
 
 // Test utilities
 export const createTestFile = (filename: string, content: string): string => {
   const dirPath = path.join(__dirname, '..', 'test-temp');
   const filePath = path.join(dirPath, filename);
   
-  // Sikre at mappen eksisterer
+  // Ensure directory exists
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
@@ -44,8 +34,8 @@ export const createTestFile = (filename: string, content: string): string => {
 };
 
 export const cleanupTestFiles = (): void => {
-  // Ikke rydd opp automatisk - la Jest håndtere dette
-  // Dette forhindrer at filer slettes mellom testene
+  // Don't clean up automatically - let Jest handle this
+  // This prevents files from being deleted between tests
 };
 
 export const cleanupAllTestFiles = (): void => {
@@ -54,8 +44,8 @@ export const cleanupAllTestFiles = (): void => {
     try {
       fs.rmSync(testTemp, { recursive: true, force: true });
     } catch (error) {
-      // Ignorer feil hvis filer er låst
-      console.warn('Kunne ikke rydde opp test-filer:', error);
+      // Ignore errors if files are locked
+      console.warn('Could not clean up test files:', error);
     }
   }
 };
@@ -63,7 +53,7 @@ export const cleanupAllTestFiles = (): void => {
 export const getTestFilePath = (filename: string): string => {
   const dirPath = path.join(__dirname, '..', 'test-temp');
   
-  // Sikre at mappen eksisterer
+  // Ensure directory exists
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
   }

@@ -52,16 +52,16 @@ export class JobQueue extends EventEmitter {
       job.startTime = new Date();
       this.emit('jobStarted', job);
 
-      logger.info(`Starter konvertering av jobb ${job.id}`, {
+      logger.info(`Starting conversion of job ${job.id}`, {
         inputPath: job.plan.inputPath,
         outputPath: job.plan.outputPath
       });
 
-              // Bruk faktisk konvertering med adapter
+              // Use actual conversion with adapter
         const result = await this.adapterManager.convert(job.plan, parameters);
         
         if (!result.success) {
-          throw new Error(result.error || 'Konvertering feilet');
+          throw new Error(result.error || 'Conversion failed');
         }
 
       job.status = 'success';
@@ -71,7 +71,7 @@ export class JobQueue extends EventEmitter {
       this.logJobResult(job, true, 0);
       this.emit('jobCompleted', job);
 
-      logger.info(`Jobb ${job.id} fullført`, {
+      logger.info(`Job ${job.id} completed`, {
         duration: job.duration,
         inputPath: job.plan.inputPath
       });
@@ -84,7 +84,7 @@ export class JobQueue extends EventEmitter {
 
       this.logJobResult(job, false, 1);
 
-      // Prøv retry hvis vi ikke har nådd maks antall forsøk
+      // Try retry if we haven't reached max attempts
       if (job.retryCount < job.maxRetries) {
         job.retryCount++;
         job.status = 'queued';
@@ -93,18 +93,18 @@ export class JobQueue extends EventEmitter {
         job.duration = undefined;
         job.error = undefined;
 
-        logger.warn(`Retry ${job.retryCount}/${job.maxRetries} for jobb ${job.id}`, {
+        logger.warn(`Retry ${job.retryCount}/${job.maxRetries} for job ${job.id}`, {
           inputPath: job.plan.inputPath,
           error: job.error
         });
 
-                 // Legg tilbake i køen
+                 // Add back to queue
          this.queue.add(async () => {
            await this.processJob(job, parameters);
          });
       } else {
         this.emit('jobFailed', job);
-        logger.error(`Jobb ${job.id} feilet etter ${job.maxRetries} forsøk`, {
+        logger.error(`Job ${job.id} failed after ${job.maxRetries} attempts`, {
           inputPath: job.plan.inputPath,
           error: job.error
         });
@@ -113,7 +113,7 @@ export class JobQueue extends EventEmitter {
   }
 
   private logJobResult(job: ConversionJob, success: boolean, exitCode: number): void {
-    // Finn riktig engine-navn basert på adapter
+    // Find correct engine name based on adapter
     const adapter = this.adapterManager.getAdapter(job.plan.inputFormat, job.plan.outputFormat);
     const engineName = adapter ? adapter.name : 'unknown';
 

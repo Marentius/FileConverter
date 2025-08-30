@@ -13,22 +13,22 @@ export async function scanForFiles(
   const plans: ConversionPlan[] = [];
   
   try {
-    // Sjekk om input er en fil eller mappe
+    // Check if input is a file or directory
     const stats = fs.statSync(inputPath);
     
     if (stats.isFile()) {
-      // Enkelt fil
+      // Single file
       const plan = await createConversionPlan(inputPath, outputDir, targetFormat);
       plans.push(plan);
     } else if (stats.isDirectory()) {
-      // Mappe - finn alle filer
+      // Directory - find all files
       const files: string[] = [];
       
       if (recursive) {
-        // Rekursiv søk - forenklet implementasjon for nå
-        logger.warn('Rekursiv søk ikke fullt implementert ennå');
+        // Recursive search - simplified implementation for now
+        logger.warn('Recursive search not fully implemented yet');
       } else {
-        // Ikke-rekursiv søk
+        // Non-recursive search
         const items = fs.readdirSync(inputPath);
         for (const item of items) {
           const fullPath = path.join(inputPath, item);
@@ -39,18 +39,18 @@ export async function scanForFiles(
         }
       }
       
-      logger.info(`Fant ${files.length} filer i mappen: ${files.join(', ')}`);
+      logger.info(`Found ${files.length} files in directory: ${files.join(', ')}`);
       
       for (const file of files) {
         const plan = await createConversionPlan(file, outputDir, targetFormat);
         plans.push(plan);
       }
     } else {
-      throw new Error(`Input path er verken fil eller mappe: ${inputPath}`);
+      throw new Error(`Input path is neither file nor directory: ${inputPath}`);
     }
     
   } catch (error) {
-    logger.error(`Feil ved skanning av input path: ${inputPath}`, { error });
+    logger.error(`Error scanning input path: ${inputPath}`, { error });
     throw error;
   }
   
@@ -65,19 +65,19 @@ async function createConversionPlan(
   const fileType = await detectFileType(inputPath);
   const inputFormat = fileType.ext;
   
-  // Generer output filnavn
+  // Generate output filename
   const inputBasename = path.basename(inputPath, path.extname(inputPath));
   const outputFilename = `${inputBasename}.${targetFormat}`;
   const outputPath = path.join(outputDir, outputFilename);
   
-  // Sjekk om konverteringen er støttet
+  // Check if conversion is supported
   const supported = fileType.supported && isSupportedFormat(targetFormat);
   let reason: string | undefined;
   
   if (!fileType.supported) {
-    reason = `Input format '${inputFormat}' er ikke støttet`;
+    reason = `Input format '${inputFormat}' is not supported`;
   } else if (!isSupportedFormat(targetFormat)) {
-    reason = `Output format '${targetFormat}' er ikke støttet`;
+    reason = `Output format '${targetFormat}' is not supported`;
   }
   
   return {
@@ -92,11 +92,11 @@ async function createConversionPlan(
 
 function isSupportedFormat(format: string): boolean {
   const supportedFormats = [
-    // Bildeformater
+    // Image formats
     'png', 'jpg', 'jpeg', 'webp', 'tiff', 'bmp', 'gif', 'heic',
-    // Dokumentformater
+    // Document formats
     'docx', 'pptx', 'xlsx', 'pdf', 'md', 'html', 'rtf', 'txt',
-    // Video/lyd
+    // Video/audio
     'mp4', 'mov', 'mp3', 'wav'
   ];
   

@@ -29,7 +29,7 @@ export class Converter {
       pages
     } = options;
     
-    logger.info('Starter filkonvertering', { 
+    logger.info('Starting file conversion', { 
       input, 
       output, 
       format, 
@@ -40,17 +40,17 @@ export class Converter {
     });
     
     try {
-      // Opprett output-mappe hvis den ikke eksisterer
+      // Create output directory if it doesn't exist
       if (!fs.existsSync(output)) {
         fs.mkdirSync(output, { recursive: true });
-        logger.info(`Opprettet output-mappe: ${output}`);
+        logger.info(`Created output directory: ${output}`);
       }
       
-      // Skann for filer og lag konverteringsplan
+      // Scan for files and create conversion plan
       const plans = await scanForFiles(input, output, format, recursive);
       
       if (plans.length === 0) {
-        logger.warn('Ingen filer funnet for konvertering');
+        logger.warn('No files found for conversion');
         return {
           totalJobs: 0,
           successfulJobs: 0,
@@ -60,15 +60,15 @@ export class Converter {
         };
       }
       
-      // Analyser planer
+      // Analyze plans
       const supportedPlans = plans.filter(p => p.supported);
       const unsupportedPlans = plans.filter(p => !p.supported);
       
-      // Vis sammendrag
+      // Show summary
       this.displaySummary(plans, supportedPlans, unsupportedPlans, dryRun);
       
       if (dryRun) {
-        // Vis detaljert plan for dry-run
+        // Show detailed plan for dry-run
         this.displayDetailedPlan(plans);
         return {
           totalJobs: plans.length,
@@ -79,11 +79,11 @@ export class Converter {
         };
       }
       
-      // Last konfigurasjon
+      // Load configuration
       const configManager = ConfigManager.getInstance();
       const config = await configManager.loadConfig();
       
-      // Forbered konverteringsparametere
+      // Prepare conversion parameters
       const conversionParameters: ConversionParameters = {
         quality,
         maxWidth,
@@ -94,28 +94,28 @@ export class Converter {
         pages
       };
 
-      // Merge med preset hvis spesifisert
+      // Merge with preset if specified
       let finalParameters = conversionParameters;
       if (preset) {
         const presetConfig = await configManager.getPreset(preset);
         if (presetConfig) {
           finalParameters = { ...presetConfig.parameters, ...conversionParameters };
-          logger.debug('Preset anvendt', { preset, parameters: presetConfig.parameters });
+          logger.debug('Preset applied', { preset, parameters: presetConfig.parameters });
         } else {
-          logger.warn('Preset ikke funnet', { preset });
+          logger.warn('Preset not found', { preset });
         }
       }
 
-      // Merge med globale standarder
+      // Merge with global defaults
       if (config.defaults) {
         finalParameters = { ...config.defaults, ...finalParameters };
       }
 
-      // Start job queue og progress tracking
+      // Start job queue and progress tracking
       return await this.processJobs(supportedPlans, concurrency, retries, finalParameters);
       
     } catch (error) {
-      logger.error('Feil under konvertering', { error });
+      logger.error('Error during conversion', { error });
       throw error;
     }
   }
@@ -164,11 +164,11 @@ export class Converter {
   }
 
   private logJobResults(jobLogs: any[]): void {
-    logger.info(`Konvertering fullført. ${jobLogs.length} jobber logget.`);
+    logger.info(`Conversion finished. ${jobLogs.length} jobs logged.`);
     
     // TODO: Lagre jobb-logger til fil i neste bolk
     for (const log of jobLogs) {
-      logger.debug('Jobb logg', log);
+      logger.debug('Job log', log);
     }
   }
   
@@ -178,20 +178,20 @@ export class Converter {
     unsupportedPlans: ConversionPlan[],
     dryRun: boolean
   ): void {
-    console.log('\n' + chalk.bold.blue('=== KONVERTERINGS SAMMENDRAG ==='));
-    console.log(`Totalt antall filer: ${chalk.bold(allPlans.length)}`);
-    console.log(`Støttede konverteringer: ${chalk.green.bold(supportedPlans.length)}`);
-    console.log(`Ikke-støttede konverteringer: ${chalk.red.bold(unsupportedPlans.length)}`);
+    console.log('\n' + chalk.bold.blue('=== CONVERSION SUMMARY ==='));
+    console.log(`Total number of files: ${chalk.bold(allPlans.length)}`);
+    console.log(`Supported conversions: ${chalk.green.bold(supportedPlans.length)}`);
+    console.log(`Unsupported conversions: ${chalk.red.bold(unsupportedPlans.length)}`);
     
     if (dryRun) {
-      console.log(chalk.yellow('🔍 DRY-RUN MODUS - Ingen filer vil bli endret'));
+      console.log(chalk.yellow('🔍 DRY-RUN MODE - No files will be changed'));
     }
     
     console.log('');
   }
   
   private displayDetailedPlan(plans: ConversionPlan[]): void {
-    console.log(chalk.bold.cyan('=== DETALJERT KONVERTERINGS PLAN ==='));
+    console.log(chalk.bold.cyan('=== DETAILED CONVERSION PLAN ==='));
     
     plans.forEach((plan, index) => {
       const status = plan.supported ? chalk.green('✓') : chalk.red('✗');
@@ -199,12 +199,12 @@ export class Converter {
       const outputName = path.basename(plan.outputPath);
       
       console.log(`${index + 1}. ${status} ${chalk.bold(inputName)} → ${chalk.bold(outputName)}`);
-      console.log(`   Fra: ${chalk.gray(plan.inputPath)}`);
-      console.log(`   Til:  ${chalk.gray(plan.outputPath)}`);
+      console.log(`   From: ${chalk.gray(plan.inputPath)}`);
+      console.log(`   To:  ${chalk.gray(plan.outputPath)}`);
       console.log(`   Format: ${chalk.blue(plan.inputFormat)} → ${chalk.blue(plan.outputFormat)}`);
       
       if (!plan.supported && plan.reason) {
-        console.log(`   ${chalk.red('Årsak:')} ${plan.reason}`);
+        console.log(`   ${chalk.red('Reason:')} ${plan.reason}`);
       }
       
       console.log('');

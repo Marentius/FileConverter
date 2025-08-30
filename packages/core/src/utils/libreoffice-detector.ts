@@ -31,29 +31,29 @@ export class LibreOfficeDetector {
     const info: LibreOfficeInfo = { found: false };
 
     try {
-      // Prøv å finne soffice i PATH
+      // Try to find soffice in PATH
       const sofficePath = await this.findSofficeInPath();
       if (sofficePath) {
         info.found = true;
         info.path = sofficePath;
         info.version = await this.getVersion(sofficePath);
-        logger.debug('LibreOffice funnet i PATH', { path: sofficePath, version: info.version });
+        logger.debug('LibreOffice found in PATH', { path: sofficePath, version: info.version });
       } else {
-        // Prøv standardplasseringer
+        // Try standard locations
         const standardPath = this.getStandardPath(platform);
         if (standardPath && fs.existsSync(standardPath)) {
           info.found = true;
           info.path = standardPath;
           info.version = await this.getVersion(standardPath);
-          logger.debug('LibreOffice funnet i standardplassering', { path: standardPath, version: info.version });
+          logger.debug('LibreOffice found in standard location', { path: standardPath, version: info.version });
         } else {
           info.error = this.getInstallationInstructions(platform);
-          logger.warn('LibreOffice ikke funnet', { platform, error: info.error });
+          logger.warn('LibreOffice not found', { platform, error: info.error });
         }
       }
     } catch (error) {
-      info.error = `Feil ved oppdagelse av LibreOffice: ${error instanceof Error ? error.message : String(error)}`;
-      logger.error('Feil ved LibreOffice-oppdagelse', { error });
+      info.error = `Error detecting LibreOffice: ${error instanceof Error ? error.message : String(error)}`;
+      logger.error('Error during LibreOffice detection', { error });
     }
 
     this.cachedInfo = info;
@@ -96,13 +96,13 @@ export class LibreOfficeDetector {
   private getInstallationInstructions(platform: string): string {
     switch (platform) {
       case 'win32':
-        return 'LibreOffice ikke funnet. Last ned og installer fra https://www.libreoffice.org/download/download/';
+        return 'LibreOffice not found. Download and install from https://www.libreoffice.org/download/download/';
       case 'darwin':
-        return 'LibreOffice ikke funnet. Installer med: brew install --cask libreoffice';
+        return 'LibreOffice not found. Install with: brew install --cask libreoffice';
       case 'linux':
-        return 'LibreOffice ikke funnet. Installer med: sudo apt-get install libreoffice (Ubuntu/Debian) eller sudo yum install libreoffice (RHEL/CentOS)';
+        return 'LibreOffice not found. Install with: sudo apt-get install libreoffice (Ubuntu/Debian) or sudo yum install libreoffice (RHEL/CentOS)';
       default:
-        return 'LibreOffice ikke funnet. Se https://www.libreoffice.org/download/download/ for installasjonsinstruksjoner.';
+        return 'LibreOffice not found. See https://www.libreoffice.org/download/download/ for installation instructions.';
     }
   }
 

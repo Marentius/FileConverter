@@ -3,9 +3,9 @@ import path from 'path';
 import { FileTypeInfo } from './types';
 import logger from './logger';
 
-// Støttede filformater basert på kravspesifikasjonen
+// Supported file formats based on requirements
 const SUPPORTED_FORMATS = {
-  // Bildeformater
+  // Image formats
   'image/heic': { ext: 'heic', supported: true },
   'image/jpeg': { ext: 'jpg', supported: true },
   'image/png': { ext: 'png', supported: true },
@@ -14,25 +14,25 @@ const SUPPORTED_FORMATS = {
   'image/bmp': { ext: 'bmp', supported: true },
   'image/gif': { ext: 'gif', supported: true },
   
-  // Dokumentformater (støttes for konvertering)
+  // Document formats (supported for conversion)
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': { ext: 'docx', supported: true },
   'application/vnd.openxmlformats-officedocument.presentationml.presentation': { ext: 'pptx', supported: true },
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': { ext: 'xlsx', supported: true },
   'application/pdf': { ext: 'pdf', supported: true },
-  'text/markdown': { ext: 'md', supported: true }, // Støttes av Pandoc
-  'text/html': { ext: 'html', supported: true }, // Støttes av Pandoc
-  'text/rtf': { ext: 'rtf', supported: true }, // Støttes av Pandoc
-  'application/rtf': { ext: 'rtf', supported: true }, // Støttes av Pandoc
-  'text/plain': { ext: 'txt', supported: true }, // Støttes av Pandoc
+  'text/markdown': { ext: 'md', supported: true }, // Supported by Pandoc
+  'text/html': { ext: 'html', supported: true }, // Supported by Pandoc
+  'text/rtf': { ext: 'rtf', supported: true }, // Supported by Pandoc
+  'application/rtf': { ext: 'rtf', supported: true }, // Supported by Pandoc
+  'text/plain': { ext: 'txt', supported: true }, // Supported by Pandoc
   
-  // Video/lyd (valgfri)
+  // Video/audio (optional)
   'video/mp4': { ext: 'mp4', supported: true },
   'video/quicktime': { ext: 'mov', supported: true },
   'audio/mpeg': { ext: 'mp3', supported: true },
   'audio/wav': { ext: 'wav', supported: true }
 };
 
-// Extension til MIME mapping for fallback
+// Extension to MIME mapping for fallback
 const EXTENSION_TO_MIME: Record<string, string> = {
   'heic': 'image/heic',
   'jpg': 'image/jpeg',
@@ -60,7 +60,7 @@ const EXTENSION_TO_MIME: Record<string, string> = {
 
 export async function detectFileType(filePath: string): Promise<FileTypeInfo> {
   try {
-    // Først prøv file-type (MIME/signatur basert)
+    // First try file-type (MIME/signature based)
     const fileType = await fileTypeFromFile(filePath);
     
     if (fileType) {
@@ -68,14 +68,14 @@ export async function detectFileType(filePath: string): Promise<FileTypeInfo> {
       const formatInfo = SUPPORTED_FORMATS[mime as keyof typeof SUPPORTED_FORMATS];
       
       if (formatInfo) {
-        logger.debug(`Filtype oppdaget via MIME: ${mime} (${formatInfo.ext})`, { filePath });
+        logger.debug(`File type detected via MIME: ${mime} (${formatInfo.ext})`, { filePath });
         return {
           ext: formatInfo.ext,
           mime,
           supported: formatInfo.supported
         };
       } else {
-        logger.warn(`Ikke-støttet MIME-type: ${mime}`, { filePath });
+        logger.warn(`Unsupported MIME type: ${mime}`, { filePath });
         return {
           ext: fileType.ext || 'unknown',
           mime,
@@ -84,17 +84,17 @@ export async function detectFileType(filePath: string): Promise<FileTypeInfo> {
       }
     }
   } catch (error) {
-    logger.debug(`Kunne ikke oppdage filtype via MIME, prøver extension`, { filePath, error });
+    logger.debug(`Could not detect file type via MIME, trying extension`, { filePath, error });
   }
   
-  // Fallback til extension-basert deteksjon
+  // Fallback to extension-based detection
   const extension = path.extname(filePath).toLowerCase().slice(1);
   const mime = EXTENSION_TO_MIME[extension];
   
   if (mime) {
     const formatInfo = SUPPORTED_FORMATS[mime as keyof typeof SUPPORTED_FORMATS];
     if (formatInfo) {
-      logger.debug(`Filtype oppdaget via extension: ${extension} (${mime})`, { filePath });
+      logger.debug(`File type detected via extension: ${extension} (${mime})`, { filePath });
       return {
         ext: formatInfo.ext,
         mime,
@@ -103,7 +103,7 @@ export async function detectFileType(filePath: string): Promise<FileTypeInfo> {
     }
   }
   
-  logger.warn(`Ikke-støttet filtype: ${extension}`, { filePath });
+  logger.warn(`Unsupported file type: ${extension}`, { filePath });
   return {
     ext: extension || 'unknown',
     mime: 'unknown',

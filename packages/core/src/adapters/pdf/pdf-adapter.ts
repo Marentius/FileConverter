@@ -40,7 +40,7 @@ export class PdfAdapter extends BaseAdapter {
     try {
       this.validateParameters(parameters);
       
-      logger.debug(`PDF adapter: Starter konvertering`, {
+      logger.debug(`PDF adapter: Starting conversion`, {
         input: plan.inputPath,
         output: plan.outputPath,
         parameters
@@ -87,7 +87,7 @@ export class PdfAdapter extends BaseAdapter {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
       
-      logger.error(`PDF adapter: Konvertering feilet`, {
+      logger.error(`PDF adapter: Conversion failed`, {
         input: plan.inputPath,
         output: plan.outputPath,
         error: errorMessage,
@@ -113,12 +113,12 @@ export class PdfAdapter extends BaseAdapter {
 
     try {
       if (!pdfTools?.ghostscript.found) {
-        throw new Error(pdfTools?.ghostscript.error || 'Ghostscript ikke funnet');
+        throw new Error(pdfTools?.ghostscript.error || 'Ghostscript not found');
       }
 
       const preset = presetName ? getPdfPreset(presetName) : getDefaultPdfPreset();
       if (!preset) {
-        throw new Error(`Ukjent preset: ${presetName}`);
+        throw new Error(`Unknown preset: ${presetName}`);
       }
 
       const gsPath = pdfTools.ghostscript.path!;
@@ -149,10 +149,10 @@ export class PdfAdapter extends BaseAdapter {
 
       const command = `"${gsPath}" ${args.join(' ')}`;
       
-      logger.debug('Kjører Ghostscript kommando', { command });
+      logger.debug('Running Ghostscript command', { command });
       
       const { stdout, stderr } = await execAsync(command, {
-        timeout: 120000, // 2 minutter timeout
+        timeout: 120000, // 2 minute timeout
         maxBuffer: 1024 * 1024 // 1MB buffer
       });
 
@@ -163,7 +163,7 @@ export class PdfAdapter extends BaseAdapter {
       const duration = Date.now() - startTime;
       const outputSize = fs.existsSync(outputPath) ? fs.statSync(outputPath).size : 0;
 
-      logger.debug(`PDF komprimering fullført`, {
+      logger.debug(`PDF compression completed`, {
         input: inputPath,
         output: outputPath,
         preset: preset.name,
@@ -184,7 +184,7 @@ export class PdfAdapter extends BaseAdapter {
 
     } catch (error) {
       const duration = Date.now() - startTime;
-      throw new Error(`PDF komprimering feilet: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`PDF compression failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -197,7 +197,7 @@ export class PdfAdapter extends BaseAdapter {
 
     try {
       if (!pdfTools?.qpdf.found) {
-        throw new Error(pdfTools?.qpdf.error || 'qpdf ikke funnet');
+        throw new Error(pdfTools?.qpdf.error || 'qpdf not found');
       }
 
       const qpdfPath = pdfTools.qpdf.path!;
@@ -213,10 +213,10 @@ export class PdfAdapter extends BaseAdapter {
 
       const command = `"${qpdfPath}" ${args.join(' ')}`;
       
-      logger.debug('Kjører qpdf merge kommando', { command });
+      logger.debug('Running qpdf merge command', { command });
       
       const { stdout, stderr } = await execAsync(command, {
-        timeout: 60000, // 60 sekunder timeout
+        timeout: 60000, // 60 second timeout
         maxBuffer: 1024 * 1024 // 1MB buffer
       });
 
@@ -227,7 +227,7 @@ export class PdfAdapter extends BaseAdapter {
       const duration = Date.now() - startTime;
       const outputSize = fs.existsSync(outputPath) ? fs.statSync(outputPath).size : 0;
 
-      logger.debug(`PDF merge fullført`, {
+      logger.debug(`PDF merge completed`, {
         inputFiles,
         output: outputPath,
         duration,
@@ -247,7 +247,7 @@ export class PdfAdapter extends BaseAdapter {
 
     } catch (error) {
       const duration = Date.now() - startTime;
-      throw new Error(`PDF merge feilet: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`PDF merge failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -261,7 +261,7 @@ export class PdfAdapter extends BaseAdapter {
 
     try {
       if (!pdfTools?.qpdf.found) {
-        throw new Error(pdfTools?.qpdf.error || 'qpdf ikke funnet');
+        throw new Error(pdfTools?.qpdf.error || 'qpdf not found');
       }
 
       const qpdfPath = pdfTools.qpdf.path!;
@@ -278,10 +278,10 @@ export class PdfAdapter extends BaseAdapter {
 
       const command = `"${qpdfPath}" ${args.join(' ')}`;
       
-      logger.debug('Kjører qpdf split kommando', { command });
+      logger.debug('Running qpdf split command', { command });
       
       const { stdout, stderr } = await execAsync(command, {
-        timeout: 60000, // 60 sekunder timeout
+        timeout: 60000, // 60 second timeout
         maxBuffer: 1024 * 1024 // 1MB buffer
       });
 
@@ -292,7 +292,7 @@ export class PdfAdapter extends BaseAdapter {
       const duration = Date.now() - startTime;
       const outputSize = fs.existsSync(outputPath) ? fs.statSync(outputPath).size : 0;
 
-      logger.debug(`PDF split fullført`, {
+      logger.debug(`PDF split completed`, {
         input: inputPath,
         output: outputPath,
         pages,
@@ -313,7 +313,7 @@ export class PdfAdapter extends BaseAdapter {
 
     } catch (error) {
       const duration = Date.now() - startTime;
-      throw new Error(`PDF split feilet: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`PDF split failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -321,15 +321,15 @@ export class PdfAdapter extends BaseAdapter {
     super.validateParameters(parameters);
     
     if (parameters.operation && !['compress', 'merge', 'split'].includes(parameters.operation)) {
-      throw new Error('Ugyldig PDF-operasjon. Støttede operasjoner: compress, merge, split');
+      throw new Error('Invalid PDF operation. Supported operations: compress, merge, split');
     }
 
     if (parameters.operation === 'merge' && (!parameters.inputFiles || parameters.inputFiles.length < 2)) {
-      throw new Error('Merge-operasjon krever minst 2 input-filer');
+      throw new Error('Merge operation requires at least 2 input files');
     }
 
     if (parameters.preset && !getPdfPreset(parameters.preset)) {
-      throw new Error(`Ukjent PDF-preset: ${parameters.preset}`);
+      throw new Error(`Unknown PDF preset: ${parameters.preset}`);
     }
   }
 

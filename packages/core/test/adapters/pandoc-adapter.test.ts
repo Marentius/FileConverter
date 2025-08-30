@@ -48,6 +48,10 @@ describe('PandocAdapter', () => {
 
       const result = await adapter.convert(plan, {});
 
+      if (!result.success) {
+        console.error('Pandoc conversion failed:', result.error);
+      }
+
       expect(result.success).toBe(true);
       expect(fs.existsSync(testOutputPath)).toBe(true);
       expect(fs.statSync(testOutputPath).size).toBeGreaterThan(0);

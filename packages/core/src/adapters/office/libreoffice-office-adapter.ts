@@ -31,38 +31,38 @@ export class LibreOfficeOfficeAdapter extends BaseAdapter {
     try {
       this.validateParameters(parameters);
       
-      logger.debug(`LibreOffice Office adapter: Starter konvertering`, {
+      logger.debug(`LibreOffice Office adapter: Starting conversion`, {
         input: plan.inputPath,
         output: plan.outputPath,
         parameters
       });
 
-      // Sjekk om LibreOffice er tilgjengelig
+      // Check if LibreOffice is available
       const libreOfficeInfo = await this.detector.detectLibreOffice();
       if (!libreOfficeInfo.found) {
-        throw new Error(libreOfficeInfo.error || 'LibreOffice ikke funnet');
+        throw new Error(libreOfficeInfo.error || 'LibreOffice not found');
       }
 
-      // Opprett output-mappe hvis den ikke eksisterer
+      // Create output directory if it doesn't exist
       const outputDir = path.dirname(plan.outputPath);
       if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
       }
 
-      // Hent original filstørrelse
+      // Get original file size
       const originalSize = fs.statSync(plan.inputPath).size;
 
       let result: ConversionResult;
 
-      // Bestem konverteringsmetode basert på input/output formater
+      // Determine conversion method based on input/output formats
       if (plan.inputFormat === 'pdf' && plan.outputFormat === 'docx') {
         result = await this.convertPdfToDocx(plan.inputPath, plan.outputPath, libreOfficeInfo.path!);
       } else {
-        // Standard Office → PDF konvertering
+        // Standard Office → PDF conversion
         result = await this.convertOfficeToPdf(plan.inputPath, plan.outputPath, libreOfficeInfo.path!);
       }
 
-      // Legg til original størrelse i metadata
+      // Add original size to metadata
       if (result.success && result.metadata) {
         result.metadata.originalSize = originalSize;
         if (fs.existsSync(plan.outputPath)) {
@@ -76,7 +76,7 @@ export class LibreOfficeOfficeAdapter extends BaseAdapter {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
       
-      logger.error(`LibreOffice Office adapter: Konvertering feilet`, {
+      logger.error(`LibreOffice Office adapter: Conversion failed`, {
         input: plan.inputPath,
         output: plan.outputPath,
         error: errorMessage,
@@ -100,26 +100,26 @@ export class LibreOfficeOfficeAdapter extends BaseAdapter {
     const startTime = Date.now();
 
     try {
-      // Opprett midlertidig mappe for LibreOffice
+      // Create temporary directory for LibreOffice
       const tmpDir = await this.createTempDir();
       
       try {
-        // Konverter med LibreOffice
+        // Convert with LibreOffice
         await this.convertWithLibreOffice(inputPath, tmpDir, sofficePath, 'pdf');
         
-        // Finn den konverterte filen
+        // Find the converted file
         const convertedFile = await this.findConvertedFile(inputPath, tmpDir, 'pdf');
         if (!convertedFile) {
-          throw new Error('Konvertert fil ikke funnet');
+          throw new Error('Converted file not found');
         }
 
-        // Flytt til ønsket plassering (atomisk)
+        // Move to desired location (atomically)
         await this.moveFileAtomically(convertedFile, outputPath);
 
         const fileStats = fs.statSync(outputPath);
         const duration = Date.now() - startTime;
 
-        logger.debug(`LibreOffice Office → PDF konvertering fullført`, {
+        logger.debug(`LibreOffice Office → PDF conversion completed`, {
           input: inputPath,
           output: outputPath,
           duration,

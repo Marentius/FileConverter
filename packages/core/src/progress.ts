@@ -26,7 +26,7 @@ export class ProgressTracker {
     this.failedJobs = 0;
     this.runningJobs = 0;
 
-    console.log(chalk.blue(`\n🚀 Starter konvertering av ${totalJobs} filer...\n`));
+    console.log(chalk.blue(`\n🚀 Starting conversion of ${totalJobs} files...\n`));
     this.progressBar.start(totalJobs, 0);
   }
 
@@ -84,16 +84,16 @@ export class ProgressTracker {
   }): void {
     const { totalJobs, successfulJobs, failedJobs, totalDuration } = result;
     
-    console.log('\n' + chalk.bold.blue('=== KONVERTERINGS SAMMENDRAG ==='));
-    console.log(`Totalt antall filer: ${chalk.bold(totalJobs)}`);
-    console.log(`Vellykket: ${chalk.green.bold(successfulJobs)}`);
-    console.log(`Feilet: ${chalk.red.bold(failedJobs)}`);
-    console.log(`Total tid: ${chalk.blue.bold(this.formatDuration(totalDuration))}`);
+    console.log('\n' + chalk.bold.blue('=== CONVERSION SUMMARY ==='));
+    console.log(`Total number of files: ${chalk.bold(totalJobs)}`);
+    console.log(`Successful: ${chalk.green.bold(successfulJobs)}`);
+    console.log(`Failed: ${chalk.red.bold(failedJobs)}`);
+    console.log(`Total time: ${chalk.blue.bold(this.formatDuration(totalDuration))}`);
     
     if (failedJobs > 0) {
-      console.log(chalk.yellow(`\n⚠️  ${failedJobs} filer feilet. Sjekk loggene for detaljer.`));
+      console.log(chalk.yellow(`\n⚠️  ${failedJobs} files failed. Check logs for details.`));
     } else {
-      console.log(chalk.green('\n🎉 Alle filer ble konvertert vellykket!'));
+      console.log(chalk.green('\n🎉 All files converted successfully!'));
     }
   }
 

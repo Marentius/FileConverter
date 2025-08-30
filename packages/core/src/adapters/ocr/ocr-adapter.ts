@@ -31,7 +31,7 @@ export class OcrAdapter extends BaseAdapter {
     try {
       this.validateParameters(parameters);
       
-      logger.debug(`OCR adapter: Starter konvertering`, {
+      logger.debug(`OCR adapter: Starting conversion`, {
         input: plan.inputPath,
         output: plan.outputPath,
         parameters

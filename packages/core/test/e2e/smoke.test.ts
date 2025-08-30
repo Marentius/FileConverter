@@ -44,17 +44,17 @@ describe('E2E Smoke Tests', () => {
 
   describe('Representative Job 1: Document Conversion', () => {
     it('should convert markdown to PDF', () => {
-      // Opprett test-fil
+      // Create test file
       createTestFile('smoke-test.md', '# Smoke Test\n\nThis is a smoke test document.');
       
-      // Kjør konvertering
+      // Run conversion
       const output = runCLI(['convert', '--in', 'smoke-test.md', '--out', 'output', '--to', 'pdf']);
       
-      // Verifiser output
-      expect(output).toContain('Vellykket');
+      // Verify output
+      expect(output).toContain('All files converted successfully');
       expect(fs.existsSync(path.join(outputDir, 'smoke-test.pdf'))).toBe(true);
       
-      // Sjekk filstørrelse
+      // Check file size
       const stats = fs.statSync(path.join(outputDir, 'smoke-test.pdf'));
       expect(stats.size).toBeGreaterThan(1000);
     }, 60000);
@@ -62,19 +62,19 @@ describe('E2E Smoke Tests', () => {
 
   describe('Representative Job 2: Batch Conversion', () => {
     it('should convert multiple files in batch', () => {
-      // Opprett flere test-filer
+      // Create multiple test files
       createTestFile('batch1.md', '# Batch Test 1\n\nFirst document.');
       createTestFile('batch2.html', '<html><body><h1>Batch Test 2</h1><p>Second document.</p></body></html>');
       createTestFile('batch3.txt', 'Third document - plain text.');
       
-      // Kjør batch-konvertering
+      // Run batch conversion
       const output = runCLI(['convert', '--in', '.', '--out', 'output', '--to', 'docx']);
       
-      // Verifiser output
-      expect(output).toContain('Vellykket');
-      expect(output).toContain('3'); // Antall filer
+      // Verify output
+      expect(output).toContain('All files converted successfully');
+      expect(output).toContain('4'); // Number of files (including smoke-test.md from previous test)
       
-      // Sjekk at alle output-filer eksisterer
+      // Check that all output files exist
       expect(fs.existsSync(path.join(outputDir, 'batch1.docx'))).toBe(true);
       expect(fs.existsSync(path.join(outputDir, 'batch2.docx'))).toBe(true);
       expect(fs.existsSync(path.join(outputDir, 'batch3.docx'))).toBe(true);
@@ -85,7 +85,7 @@ describe('E2E Smoke Tests', () => {
     it('should show supported formats', () => {
       const output = runCLI(['formats']);
       
-      expect(output).toContain('STØTTEDE FILFORMATER');
+      expect(output).toContain('SUPPORTED FILE FORMATS');
       expect(output).toContain('png');
       expect(output).toContain('pdf');
       expect(output).toContain('docx');
@@ -94,7 +94,7 @@ describe('E2E Smoke Tests', () => {
     it('should show available presets', () => {
       const output = runCLI(['presets']);
       
-      expect(output).toContain('TILGJENGELIGE PRESETS');
+      expect(output).toContain('AVAILABLE PRESETS');
       expect(output).toContain('image/web');
       expect(output).toContain('image/print');
     });
@@ -103,8 +103,8 @@ describe('E2E Smoke Tests', () => {
       const output = runCLI(['check-pandoc']);
       
       expect(output).toContain('PANDOC STATUS');
-      expect(output).toContain('Pandoc funnet');
-      expect(output).toContain('LaTeX funnet');
+      expect(output).toContain('Pandoc found');
+      expect(output).toContain('LaTeX found');
     });
   });
 
@@ -112,7 +112,7 @@ describe('E2E Smoke Tests', () => {
     it('should handle non-existent input gracefully', () => {
       const output = runCLI(['convert', '--in', 'non-existent.md', '--out', 'output', '--to', 'pdf']);
       
-      // Testen feiler fordi filen ikke eksisterer, men det er forventet oppførsel
+      // Test fails because file doesn't exist, but that's expected behavior
       expect(output).toContain('ENOENT');
     });
 
@@ -121,7 +121,7 @@ describe('E2E Smoke Tests', () => {
       
       const output = runCLI(['convert', '--in', 'test.xyz', '--out', 'output', '--to', 'pdf']);
       
-      expect(output).toContain('Ikke-støttet');
+      expect(output).toContain('Unsupported');
     });
   });
 
@@ -131,10 +131,10 @@ describe('E2E Smoke Tests', () => {
       
       const output = runCLI(['convert', '--in', 'dry-run-test.md', '--out', 'output', '--to', 'pdf', '--dry-run']);
       
-      expect(output).toContain('DRY-RUN MODUS');
-      expect(output).toContain('Ingen filer vil bli endret');
+      expect(output).toContain('DRY-RUN MODE');
+      expect(output).toContain('No files will be changed');
       
-      // Verifiser at ingen filer ble opprettet
+      // Verify that no files were created
       expect(fs.existsSync(path.join(outputDir, 'dry-run-test.pdf'))).toBe(false);
     });
   });

@@ -19,7 +19,7 @@ export class SharpAdapter extends BaseAdapter {
     try {
       this.validateParameters(parameters);
       
-      logger.debug(`Sharp adapter: Starter konvertering`, {
+      logger.debug(`Sharp adapter: Starting conversion`, {
         input: plan.inputPath,
         output: plan.outputPath,
         parameters
@@ -97,19 +97,19 @@ export class SharpAdapter extends BaseAdapter {
           break;
         
         default:
-          throw new Error(`Ikke-støttet output format: ${outputFormat}`);
+          throw new Error(`Unsupported output format: ${outputFormat}`);
       }
 
-      // Skriv til fil
+      // Write to file
       fs.writeFileSync(plan.outputPath, outputBuffer);
 
-      // Hent metadata
+      // Get metadata
       const metadata = await sharp(plan.outputPath).metadata();
       const fileStats = fs.statSync(plan.outputPath);
 
       const duration = Date.now() - startTime;
 
-      logger.debug(`Sharp adapter: Konvertering fullført`, {
+      logger.debug(`Sharp adapter: Conversion completed`, {
         input: plan.inputPath,
         output: plan.outputPath,
         duration,
@@ -133,7 +133,7 @@ export class SharpAdapter extends BaseAdapter {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
       
-      logger.error(`Sharp adapter: Konvertering feilet`, {
+      logger.error(`Sharp adapter: Conversion failed`, {
         input: plan.inputPath,
         output: plan.outputPath,
         error: errorMessage,
@@ -152,7 +152,7 @@ export class SharpAdapter extends BaseAdapter {
   validateParameters(parameters: ConversionParameters): void {
     super.validateParameters(parameters);
     
-    // Sharp-spesifikke valideringer - quality må være number for bildekonvertering
+    // Sharp-specific validations - quality must be number for image conversion
     if (parameters.quality !== undefined && parameters.quality !== null) {
       if (typeof parameters.quality !== 'number') {
         throw new Error('Quality must be a number for image conversion');

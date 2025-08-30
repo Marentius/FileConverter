@@ -7,13 +7,16 @@
     "packages/*"
   ],
   "scripts": {
+    "setup": "npm install && cd packages/core && npm install && npm run build && cd ../gui && npm install && npx tauri build && cd ../.. && npm link",
     "build": "npm run build --workspaces",
     "dev": "npm run dev --workspaces",
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces",
     "clean": "npm run clean --workspaces",
     "gui:dev": "cd packages/gui && npm run tauri dev",
-    "gui:build": "cd packages/gui && npm run tauri build"
+    "gui:build": "cd packages/gui && npm run tauri build",
+    "core:build": "cd packages/core && npm run build",
+    "core:dev": "cd packages/core && npm run dev"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

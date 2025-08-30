@@ -46,7 +46,7 @@ export class ImageMagickAdapter extends BaseAdapter {
     try {
       this.validateParameters(parameters);
       
-      logger.debug(`ImageMagick adapter: Starter konvertering`, {
+      logger.debug(`ImageMagick adapter: Starting conversion`, {
         input: plan.inputPath,
         output: plan.outputPath,
         parameters
@@ -129,7 +129,7 @@ export class ImageMagickAdapter extends BaseAdapter {
       const fileStats = fs.statSync(plan.outputPath);
       const duration = Date.now() - startTime;
 
-      logger.debug(`ImageMagick adapter: Konvertering fullført`, {
+      logger.debug(`ImageMagick adapter: Conversion finished`, {
         input: plan.inputPath,
         output: plan.outputPath,
         duration,
@@ -150,7 +150,7 @@ export class ImageMagickAdapter extends BaseAdapter {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
       
-      logger.error(`ImageMagick adapter: Konvertering feilet`, {
+      logger.error(`ImageMagick adapter: Conversion failed`, {
         input: plan.inputPath,
         output: plan.outputPath,
         error: errorMessage,

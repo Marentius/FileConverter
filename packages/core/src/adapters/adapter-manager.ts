@@ -13,8 +13,8 @@ export class AdapterManager {
   private adapters: BaseAdapter[] = [];
 
   constructor() {
-    // Registrer tilgjengelige adapters
-    // ImageMagick først for HEIC-støtte på Windows
+    // Register available adapters
+    // ImageMagick first for HEIC support on Windows
     this.registerAdapter(new ImageMagickAdapter());
     this.registerAdapter(new SharpAdapter());
     this.registerAdapter(new LibreOfficeAdapter());
@@ -26,7 +26,7 @@ export class AdapterManager {
 
   registerAdapter(adapter: BaseAdapter): void {
     this.adapters.push(adapter);
-    logger.debug(`Registrert adapter: ${adapter.name}`);
+    logger.debug(`Registered adapter: ${adapter.name}`);
   }
 
   getAdapter(inputFormat: string, outputFormat: string): BaseAdapter | null {
@@ -45,7 +45,7 @@ export class AdapterManager {
     const adapter = this.getAdapter(plan.inputFormat, plan.outputFormat);
     
     if (!adapter) {
-      const error = `Ingen adapter funnet for konvertering fra ${plan.inputFormat} til ${plan.outputFormat}`;
+      const error = `No adapter found for conversion from ${plan.inputFormat} to ${plan.outputFormat}`;
       logger.error(error);
       return {
         success: false,
@@ -55,7 +55,7 @@ export class AdapterManager {
       };
     }
 
-    logger.info(`Bruker adapter: ${adapter.name}`, {
+    logger.info(`Using adapter: ${adapter.name}`, {
       inputFormat: plan.inputFormat,
       outputFormat: plan.outputFormat
     });

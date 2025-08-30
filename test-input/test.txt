@@ -1,2 +1,0 @@
-Dette er en test-fil for FileConverter CLI.
-Denne filen skal konverteres til PDF i dry-run modus.
