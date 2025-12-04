@@ -4,29 +4,29 @@
     "version": "1.0.0",
     "type": "module",
     "scripts": {
-      "dev": "vite",
-      "build": "tsc && vite build",
-      "preview": "vite preview",
-      "tauri": "tauri",
-      "test": "echo \"No tests specified for GUI package\" && exit 0"
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "preview": "vite preview",
+        "tauri": "tauri",
+        "test": "echo \"No tests specified for GUI package\" && exit 0"
     },
     "dependencies": {
-      "@fileconverter/core": "file:../core",
-      "@tauri-apps/api": "^2.8.0",
-      "@tauri-apps/plugin-opener": "^2",
-      "i18next": "^25.4.2",
-      "lucide-react": "^0.542.0",
-      "react": "^19.1.0",
-      "react-dom": "^19.1.0",
-      "react-dropzone": "^14.3.8",
-      "react-i18next": "^15.7.3"
+        "@fileconverter/core": "file:../core",
+        "@tauri-apps/api": "^2.8.0",
+        "@tauri-apps/plugin-opener": "^2",
+        "i18next": "^25.4.2",
+        "lucide-react": "^0.542.0",
+        "react": "^19.2.1",
+        "react-dom": "^19.2.1",
+        "react-dropzone": "^14.3.8",
+        "react-i18next": "^15.7.3"
     },
     "devDependencies": {
-      "@tauri-apps/cli": "^2",
-      "@types/react": "^19.1.8",
-      "@types/react-dom": "^19.1.6",
-      "@vitejs/plugin-react": "^4.6.0",
-      "typescript": "~5.8.3",
-      "vite": "^7.0.4"
+        "@tauri-apps/cli": "^2",
+        "@types/react": "^19.1.8",
+        "@types/react-dom": "^19.1.6",
+        "@vitejs/plugin-react": "^4.6.0",
+        "typescript": "~5.8.3",
+        "vite": "^7.0.4"
     }
-  }
+}
