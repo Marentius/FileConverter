@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { detectFileType } from './file-detector';
 import { ConversionPlan } from './types';
+import { validatePath, sanitizeFilename } from './path-security';
 import logger from './logger';
 
 export async function scanForFiles(
@@ -65,10 +66,13 @@ async function createConversionPlan(
   const fileType = await detectFileType(inputPath);
   const inputFormat = fileType.ext;
   
-  // Generate output filename
-  const inputBasename = path.basename(inputPath, path.extname(inputPath));
+  const inputBasename = sanitizeFilename(
+    path.basename(inputPath, path.extname(inputPath))
+  );
   const outputFilename = `${inputBasename}.${targetFormat}`;
   const outputPath = path.join(outputDir, outputFilename);
+
+  validatePath(outputPath, outputDir);
   
   // Check if conversion is supported
   const supported = fileType.supported && isSupportedFormat(targetFormat);

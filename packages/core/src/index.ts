@@ -1,6 +1,7 @@
 export { Converter } from './converter';
 export { detectFileType, isSupportedFormat, getSupportedFormats } from './file-detector';
 export { scanForFiles } from './file-scanner';
+export { validatePath, sanitizeFilename } from './path-security';
 export { JobQueue } from './job-queue';
 export { ProgressTracker } from './progress';
 export { AdapterManager } from './adapters/adapter-manager';

@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { BaseAdapter, ConversionParameters, ConversionResult } from '../base-adapter';
 import { ConversionPlan } from '../../types';
+import { validatePath } from '../../path-security';
 import logger from '../../logger';
 
 /**
@@ -76,7 +77,11 @@ export class PdfAdapter extends BaseAdapter {
     const mergedPdf = await PDFDocument.create();
 
     for (const filePath of inputFiles) {
-      const fileBytes = fs.readFileSync(filePath);
+      const resolvedInput = path.resolve(filePath);
+      if (!fs.existsSync(resolvedInput)) {
+        throw new Error(`Input file not found: ${filePath}`);
+      }
+      const fileBytes = fs.readFileSync(resolvedInput);
       const donorPdf = await PDFDocument.load(fileBytes);
       const indices = donorPdf.getPageIndices();
       const copiedPages = await mergedPdf.copyPages(donorPdf, indices);
