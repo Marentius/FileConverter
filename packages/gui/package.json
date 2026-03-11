@@ -12,19 +12,19 @@
     },
     "dependencies": {
         "@fileconverter/core": "file:../core",
-        "@tauri-apps/api": "^2.8.0",
-        "@tauri-apps/plugin-opener": "^2",
-        "i18next": "^25.4.2",
-        "lucide-react": "^0.542.0",
-        "react": "^19.2.1",
-        "react-dom": "^19.2.1",
+        "@tauri-apps/api": "^2.10.1",
+        "@tauri-apps/plugin-opener": "^2.5.3",
+        "i18next": "^25.8.18",
+        "lucide-react": "^0.577.0",
+        "react": "^19.2.4",
+        "react-dom": "^19.2.4",
         "react-dropzone": "^14.3.8",
         "react-i18next": "^15.7.3"
     },
     "devDependencies": {
-        "@tauri-apps/cli": "^2",
-        "@types/react": "^19.1.8",
-        "@types/react-dom": "^19.1.6",
+        "@tauri-apps/cli": "^2.10.1",
+        "@types/react": "^19.2.14",
+        "@types/react-dom": "^19.2.3",
         "@vitejs/plugin-react": "^4.6.0",
         "typescript": "^5.9.3",
         "vite": "^7.0.4"
