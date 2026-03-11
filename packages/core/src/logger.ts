@@ -1,6 +1,7 @@
 import winston from 'winston';
 import path from 'path';
 import { Logger } from './types';
+import { sanitizeLogValue } from './log-sanitizer';
 
 // Bruk en sikker plassering for logger
 const getLogDir = () => {
@@ -28,8 +29,15 @@ if (!fs.existsSync(logDir)) {
   }
 }
 
-// Console format (menneskelesbar)
+const sanitizeFormat = winston.format((info) => {
+  if (typeof info.message === 'string') {
+    info.message = sanitizeLogValue(info.message);
+  }
+  return info;
+});
+
 const consoleFormat = winston.format.combine(
+  sanitizeFormat(),
   winston.format.colorize(),
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.printf(({ timestamp, level, message, ...meta }) => {

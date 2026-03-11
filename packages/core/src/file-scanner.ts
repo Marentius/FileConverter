@@ -3,6 +3,7 @@ import fs from 'fs';
 import { detectFileType } from './file-detector';
 import { ConversionPlan } from './types';
 import { validatePath, sanitizeFilename } from './path-security';
+import { sanitizeLogValue } from './log-sanitizer';
 import logger from './logger';
 
 export async function scanForFiles(
@@ -40,7 +41,10 @@ export async function scanForFiles(
         }
       }
       
-      logger.info(`Found ${files.length} files in directory: ${files.join(', ')}`);
+      logger.info('Found files in directory', {
+        count: files.length,
+        directory: sanitizeLogValue(inputPath),
+      });
       
       for (const file of files) {
         const plan = await createConversionPlan(file, outputDir, targetFormat);

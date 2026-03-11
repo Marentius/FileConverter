@@ -3,6 +3,7 @@ export { detectFileType, isSupportedFormat, getSupportedFormats } from './file-d
 export { scanForFiles } from './file-scanner';
 export { validatePath, sanitizeFilename } from './path-security';
 export { parsePositiveInt, parseIntInRange } from './input-validation';
+export { sanitizeLogValue } from './log-sanitizer';
 export { JobQueue } from './job-queue';
 export { ProgressTracker } from './progress';
 export { AdapterManager } from './adapters/adapter-manager';
