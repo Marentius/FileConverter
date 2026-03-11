@@ -28,14 +28,14 @@
     "cli-progress": "^3.12.0",
     "commander": "^14.0.3",
     "file-type": "^21.3.1",
-    "glob": "^13.0.6",
-    "ora": "^9.3.0",
+    "js-yaml": "^4.1.0",
     "p-queue": "^9.1.0",
     "winston": "^3.19.0",
     "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@types/cli-progress": "^3.11.6",
+    "@types/js-yaml": "^4.0.9",
     "@types/jest": "^29.5.8",
     "@types/node": "^22.19.15",
     "@eslint/js": "^9.39.4",
