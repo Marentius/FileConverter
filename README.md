@@ -1,455 +1,236 @@
-# FileConverter 🔄
+# FileConverter
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js CI](https://github.com/Marentius/FileConverter/actions/workflows/ci.yml/badge.svg)](https://github.com/Marentius/FileConverter/actions/workflows/ci.yml)
-[![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](https://github.com/Marentius/FileConverter)
 
-**Universal file conversion tool with batch support**
+A fast, zero-config file conversion CLI. Images, documents, PDFs, and OCR — all powered by npm packages with **no external system dependencies**.
 
-## ✨ Features
-
-### 🖼️ **Image Conversion**
-- **Supported formats**: PNG, JPG, WebP, TIFF, BMP, GIF, HEIC
-- **Advanced options**: Resize, quality control, metadata handling
-- **Batch support**: Convert entire folders with one command
-- **Preset system**: Web, print, thumbnail, social media optimization
-
-### 📄 **Document Conversion**
-- **Office formats**: DOCX, PPTX, XLSX ↔ PDF
-- **Markup formats**: MD, HTML, RTF, TXT ↔ PDF/DOCX
-- **LibreOffice integration**: Automatic detection and conversion
-- **Pandoc support**: Advanced document conversion with LaTeX
-
-### 📊 **PDF Operations**
-- **Compression**: Screen, ebook, printer, prepress presets
-- **Merging**: Combine multiple PDF files
-- **Splitting**: Split PDF into pages or ranges
-- **Ghostscript/qpdf**: Professional PDF tools
-
-### 🔍 **OCR Functionality**
-- **PDF → searchable PDF**: With ocrmypdf
-- **Image → text**: With Tesseract
-- **Language support**: Norwegian, English, German and more
-- **Quality settings**: Fast, standard, high
-
-### 🎛️ **Advanced Features**
-- **CLI & GUI**: Command line and modern desktop app
-- **Preset system**: Global and local configurations
-- **Batch processing**: Parallel conversion with retry logic
-- **Dry-run mode**: Test conversions without changes
-- **Comprehensive logging**: JSON logs with detailed information
-
-## 🚀 Getting Started
-
-### Installation
+## Quick Start
 
 ```bash
-# Clone the project
-git clone https://github.com/Marentius/FileConverter.git
-cd FileConverter
-
-# Install root dependencies
-npm install
-
-# Install and build core package (CLI)
-cd packages/core
-npm install
-npm run build
-
-# Install and build GUI package
-cd ../gui
-npm install
-npx tauri build
-
-# Return to root and link CLI globally (optional)
-cd ../..
-npm link
-```
-
-### Alternative: Quick Installation Script
-
-```bash
-# Clone and setup everything automatically
 git clone https://github.com/Marentius/FileConverter.git
 cd FileConverter
 npm run setup
 ```
 
-### Development Setup
+That's it. No need to install LibreOffice, Pandoc, Ghostscript, or Tesseract.
 
 ```bash
-# Install all dependencies and build for development
-npm install
-cd packages/core && npm install && npm run build
-cd ../gui && npm install && npx tauri build
-cd ../..
-npm link
+cd packages/core
+
+# Convert an image
+node dist/cli.js convert -i photo.png -o output/ --to jpg
+
+# Markdown to PDF
+node dist/cli.js convert -i README.md -o output/ --to pdf
+
+# Merge PDFs
+node dist/cli.js pdf --merge a.pdf b.pdf c.pdf -o merged.pdf
+
+# OCR: extract text from an image
+node dist/cli.js ocr -i scan.png -o result.txt
 ```
 
-### Quick Start
+## Supported Formats
+
+| Category | Input | Output |
+|----------|-------|--------|
+| **Images** | PNG, JPG, JPEG, WebP, TIFF, BMP, GIF, HEIC | JPG, PNG, WebP, TIFF |
+| **Documents** | Markdown, HTML, TXT | PDF, HTML, Markdown, TXT |
+| **PDF** | PDF | PDF (merge, split, optimize) |
+| **OCR** | PNG, JPG, TIFF, BMP, WebP | TXT |
+
+## CLI Reference
+
+### `convert` — File conversion
 
 ```bash
-# Convert single image
-converter convert -i image.jpg -o output.png -t png
-
-# Batch conversion of folders
-converter convert -i photos/ -o converted/ -t webp --recursive
-
-# Document to PDF
-converter convert -i document.docx -o output.pdf -t pdf
-
-# Compress PDF
-converter pdf --compress input.pdf -o compressed.pdf --preset screen
+converter convert -i <input> -o <output> --to <format> [options]
 ```
 
-## 📋 Complete CLI Commands
+| Option | Description |
+|--------|-------------|
+| `-i, --in <path>` | Input file or folder |
+| `-o, --out <path>` | Output folder |
+| `-t, --to <format>` | Target format (e.g. `png`, `pdf`, `html`) |
+| `-r, --recursive` | Search subfolders recursively |
+| `--dry-run` | Preview without converting |
+| `--concurrency <n>` | Parallel jobs (default: 1) |
+| `--retries <n>` | Retry attempts per job (default: 2) |
+| `--quality <1-100>` | Image quality |
+| `--max-width <px>` | Maximum image width |
+| `--max-height <px>` | Maximum image height |
+| `--strip-metadata` | Remove image metadata |
+| `--preset <name>` | Use a preset (see below) |
 
-### 🚀 **Main Commands**
-
-#### **1. Basic Conversion**
-```bash
-converter convert [options]
-```
-**Options:**
-- `-i, --in <path>` - Input file or folder
-- `-o, --out <path>` - Output folder  
-- `-t, --to <format>` - Target format (e.g., png, pdf, docx)
-- `-r, --recursive` - Search recursively in subfolders
-- `--dry-run` - Show what would happen without converting
-- `--concurrency <number>` - Number of parallel jobs (default: 1)
-- `--retries <number>` - Number of retry attempts per job (default: 2)
-- `--quality <number>` - Quality for image conversion (1-100)
-- `--max-width <number>` - Maximum width for images
-- `--max-height <number>` - Maximum height for images
-- `--strip-metadata` - Remove metadata from images
-- `--preset <name>` - Use preset (image/web, image/print, image/thumbnail, etc.)
-
-#### **2. PDF Operations**
-```bash
-converter pdf [options]
-```
-**Options:**
-- `--compress <file>` - Compress PDF file
-- `--merge <files...>` - Merge multiple PDF files
-- `--split <file>` - Split PDF file
-- `--pages <range>` - Page ranges for split (e.g., 1-3,5,7-9)
-- `--preset <name>` - PDF preset (screen, ebook, printer, prepress)
-- `-o, --out <file>` - Output PDF file
-
-#### **3. OCR Operations**
-```bash
-converter ocr [options]
-```
-**Options:**
-- `-i, --in <file>` - Input file (PDF, PNG, JPG, etc.)
-- `-o, --out <file>` - Output file
-- `--lang <language>` - Language for OCR (e.g., eng, nno, deu)
-- `--quality <level>` - OCR quality (fast, standard, high) (default: "standard")
-
-### 📊 **Information Commands**
-
-#### **4. Show supported formats**
-```bash
-converter formats
-```
-
-#### **5. Show available presets**
-```bash
-converter presets
-```
-
-#### **6. Show PDF presets**
-```bash
-converter pdf-presets
-```
-
-#### **7. Show version and system info**
-```bash
-converter version
-```
-
-### 🔧 **System Check Commands**
-
-#### **8. Check LibreOffice**
-```bash
-converter check-libreoffice
-```
-
-#### **9. Check PDF tools**
-```bash
-converter check-pdf-tools
-```
-
-#### **10. Check Pandoc**
-```bash
-converter check-pandoc
-```
-
-#### **11. Check OCR tools**
-```bash
-converter check-ocr
-```
-
-### ⚙️ **Preset Management**
-
-#### **12. List all presets**
-```bash
-converter preset list
-```
-
-#### **13. Create new preset**
-```bash
-converter preset create [options]
-```
-**Options:**
-- `-n, --name <name>` - Preset name
-- `-d, --description <description>` - Preset description
-- `-t, --type <type>` - Preset type (image|pdf|document)
-- `-p, --parameters <parameters>` - Preset parameters (format: key1=value1;key2=value2)
-- `-s, --scope <scope>` - Preset scope (global|local) (default: "local")
-
-#### **14. Delete preset**
-```bash
-converter preset delete [options]
-```
-**Options:**
-- `-n, --name <name>` - Preset name
-- `-s, --scope <scope>` - Preset scope (global|local) (default: "local")
-
-### 📝 **Practical Examples**
-
-#### **Image Conversion:**
-```bash
-# PNG to JPG with high quality
-converter convert -i image.png -o output.jpg -t jpg --quality 95
-
-# WebP conversion with preset
-converter convert -i images/ -o output/ -t webp --preset image/web --recursive
-
-# HEIC to PNG (requires ImageMagick)
-converter convert -i photo.heic -o photo.png -t png
-```
-
-#### **Document Conversion:**
-```bash
-# Office documents to PDF
-converter convert -i document.docx -o output.pdf -t pdf
-converter convert -i presentation.pptx -o output.pdf -t pdf
-converter convert -i spreadsheet.xlsx -o output.pdf -t pdf
-
-# Markdown to PDF with LaTeX
-converter convert -i readme.md -o readme.pdf -t pdf
-```
-
-#### **PDF Operations:**
-```bash
-# Compress PDF for web
-converter pdf --compress input.pdf -o compressed.pdf --preset screen
-
-# Merge multiple PDF files
-converter pdf --merge chapter1.pdf chapter2.pdf chapter3.pdf -o book.pdf
-
-# Split PDF
-converter pdf --split document.pdf --pages 1-3,5,7-9 -o partial.pdf
-```
-
-#### **OCR Operations:**
-```bash
-# Make PDF searchable
-converter ocr -i scanned-document.pdf -o searchable.pdf --lang nno
-
-# Extract text from image
-converter ocr -i image-with-text.png -o extracted-text.txt --lang eng --quality high
-```
-
-#### **Preset Management:**
-```bash
-# Create custom image preset
-converter preset create -n "my-web" -d "My web optimization" -t image -p "quality=85;maxWidth=1200;stripMetadata=true"
-
-# List all presets
-converter preset list
-
-# Delete preset
-converter preset delete -n "my-web"
-```
-
-### 🆘 **Help Commands**
+### `pdf` — PDF operations
 
 ```bash
-# General help
-converter --help
-
-# Help for specific command
-converter convert --help
-converter pdf --help
-converter ocr --help
-converter preset --help
+converter pdf --compress <file> -o <output>
+converter pdf --merge <files...> -o <output>
+converter pdf --split <file> --pages <range> -o <output>
 ```
 
-## 🖥️ GUI Application
+| Option | Description |
+|--------|-------------|
+| `--compress <file>` | Optimize a PDF (remove orphaned objects) |
+| `--merge <files...>` | Merge multiple PDFs into one |
+| `--split <file>` | Extract pages from a PDF |
+| `--pages <range>` | Page ranges, e.g. `1-3,5,7-9` |
+| `-o, --out <file>` | Output file |
 
-FileConverter comes with a modern desktop application built with Tauri + React:
+### `ocr` — Text extraction
 
-### GUI Features:
-- **Drag-and-drop**: Easy file and folder selection
-- **Format selector**: Visual overview of all supported formats
-- **Progress tracking**: Live progress for conversions
-- **Dependency check**: Automatic check of external tools
-- **Advanced settings**: Access to all CLI options
-
-### Start GUI:
 ```bash
-# Development mode
-npm run gui:dev
-
-# Build for production
-npm run gui:build
+converter ocr -i <image> -o <output.txt> [--lang <language>]
 ```
 
-## 📦 Supported Formats
+| Option | Description |
+|--------|-------------|
+| `-i, --in <file>` | Input image (PNG, JPG, TIFF, etc.) |
+| `-o, --out <file>` | Output text file |
+| `--lang <code>` | Language code (default: `eng`). Examples: `nno`, `deu`, `fra` |
 
-### 🖼️ **Image Formats**
-- **Input/Output**: PNG, JPG, WebP, TIFF, BMP, GIF
-- **Input**: HEIC (requires ImageMagick)
+### Other commands
 
-### 📄 **Document Formats**
-- **Office**: DOCX, PPTX, XLSX ↔ PDF
-- **Markup**: MD, HTML, RTF, TXT ↔ PDF/DOCX
-- **PDF**: Compression, merging, splitting
+```bash
+converter formats          # List supported formats
+converter presets          # List image presets
+converter preset list      # List all presets (built-in + custom)
+converter preset create    # Create a custom preset
+converter preset delete    # Delete a custom preset
+converter version          # Show version and system info
+```
 
-### 🎵 **Media Formats** *(planned)*
-- **Video**: MP4, MOV
-- **Audio**: MP3, WAV
+## Presets
 
-## 🔧 Dependencies
+Built-in image presets:
 
-FileConverter uses external tools for advanced features:
+| Preset | Quality | Max Size | Strip Metadata |
+|--------|---------|----------|----------------|
+| `image/web` | 85 | 1920x1080 | Yes |
+| `image/print` | 95 | 3000x3000 | No |
+| `image/thumbnail` | 80 | 300x300 | Yes |
+| `image/social` | 90 | 1200x1200 | Yes |
+| `image/original` | 100 | — | No |
 
-### **Required for document conversion:**
-- **LibreOffice**: Office formats ↔ PDF
-- **Pandoc**: Markup formats ↔ PDF/DOCX
-- **LaTeX**: High quality PDF from markdown
+```bash
+# Use a preset
+converter convert -i photos/ -o output/ --to webp --preset image/web -r
 
-### **Required for PDF operations:**
-- **Ghostscript**: PDF compression
-- **qpdf**: Advanced PDF manipulation
+# Create a custom preset
+converter preset create -n "my-preset" -d "Small JPGs" -t image -p "quality=70;maxWidth=800"
+```
 
-### **Required for OCR:**
-- **ocrmypdf**: PDF → searchable PDF
-- **Tesseract**: Image → text
+## Examples
 
-### **Required for HEIC:**
-- **ImageMagick**: HEIC support on Windows
+```bash
+# Batch convert a folder of PNGs to WebP
+converter convert -i screenshots/ -o optimized/ --to webp --quality 85 -r
 
-## 🏗️ Project Structure
+# Markdown to HTML
+converter convert -i docs/ -o site/ --to html -r
+
+# Split specific pages from a PDF
+converter pdf --split thesis.pdf --pages 1-5,10 -o excerpt.pdf
+
+# OCR a scanned document in Norwegian
+converter ocr -i scan.png -o text.txt --lang nno
+
+# Dry run to preview what would happen
+converter convert -i archive/ -o output/ --to jpg --dry-run
+```
+
+## Architecture
 
 ```
 FileConverter/
 ├── packages/
-│   ├── core/                 # TypeScript CLI + library
+│   ├── core/                  # CLI + conversion engine
 │   │   ├── src/
-│   │   │   ├── cli.ts        # CLI entry point
-│   │   │   ├── converter.ts  # Main conversion logic
-│   │   │   ├── adapters/     # Conversion adapters
-│   │   │   │   ├── images/   # Sharp, ImageMagick
-│   │   │   │   ├── office/   # LibreOffice
-│   │   │   │   ├── document/ # Pandoc
-│   │   │   │   ├── pdf/      # Ghostscript, qpdf
-│   │   │   │   └── ocr/      # ocrmypdf, Tesseract
-│   │   │   ├── presets/      # Preset system
-│   │   │   └── utils/        # Helper utilities
-│   │   ├── dist/             # Built code
-│   │   └── test/             # Tests
-│   └── gui/                  # Tauri + React GUI
-│       ├── src/              # React components
-│       └── src-tauri/        # Rust backend
-├── logs/                     # Log files
-└── docs/                     # Documentation
+│   │   │   ├── cli.ts         # CLI entry point (Commander.js)
+│   │   │   ├── converter.ts   # Orchestration layer
+│   │   │   ├── file-scanner.ts
+│   │   │   ├── job-queue.ts   # Parallel execution (p-queue)
+│   │   │   ├── adapters/
+│   │   │   │   ├── images/    # Sharp
+│   │   │   │   ├── document/  # marked + pdfkit + turndown
+│   │   │   │   ├── pdf/       # pdf-lib
+│   │   │   │   └── ocr/       # tesseract.js
+│   │   │   ├── presets/       # Image presets
+│   │   │   └── config/        # Preset management
+│   │   └── test/
+│   └── gui/                   # Tauri + React desktop app (WIP)
+└── package.json               # Workspace root
 ```
 
-## 🧪 Testing
+### Adapter pattern
+
+All conversions flow through adapters: `CLI → Converter → FileScanner → JobQueue → Adapter`
+
+The `AdapterManager` selects the right adapter based on input/output format. Each adapter extends `BaseAdapter` and implements a `convert()` method. Currently registered adapters:
+
+| Adapter | Library | Handles |
+|---------|---------|---------|
+| `SharpAdapter` | sharp | Image format conversion, resize, quality |
+| `DocumentAdapter` | marked, pdfkit, turndown | MD/HTML/TXT conversions |
+| `PdfAdapter` | pdf-lib | PDF merge, split, optimize |
+| `OcrAdapter` | tesseract.js | Image-to-text extraction |
+
+## Development
 
 ```bash
-# Run all tests
-npm run test
+# Install all dependencies
+npm install
 
-# Unit tests
-npm run test:unit
+# Build core
+npm run core:build
 
-# Integration tests
+# Watch mode
+npm run core:dev
+
+# Run tests
+cd packages/core
+npm test              # All tests
+npm run test:unit     # Adapter unit tests
 npm run test:integration
-
-# E2E tests
 npm run test:e2e
-
-# With coverage
 npm run test:coverage
-```
 
-## 🚀 Development
-
-```bash
-# Start development mode
-npm run dev
-
-# Build project
-npm run build
-
-# Lint code
+# Lint
 npm run lint
 npm run lint:fix
-
-# Clean up
-npm run clean
 ```
 
-## 📊 Status
+### Running a single test
 
-### ✅ **Fully implemented:**
-- CLI with all main commands
-- Image conversion (Sharp + ImageMagick)
-- Document conversion (LibreOffice + Pandoc)
-- PDF operations (Ghostscript + qpdf)
-- OCR functionality (ocrmypdf + Tesseract)
-- Preset system with global/local scope
-- Comprehensive testing (33 tests)
-- GUI application (Tauri + React)
-- CI/CD pipeline
+```bash
+cd packages/core
+npx jest path/to/test.spec.ts
+```
 
-### 🔄 **In development:**
-- Media conversion (video/audio)
-- Multiple languages in GUI
-- Cloud integration
+## Tech Stack
 
-### 📋 **Planned:**
-- Web API
-- Plugin system
-- More output formats
+| Component | Library |
+|-----------|---------|
+| CLI framework | Commander.js |
+| Image processing | Sharp |
+| PDF manipulation | pdf-lib |
+| PDF generation | PDFKit |
+| Markdown parsing | marked |
+| HTML-to-Markdown | Turndown |
+| OCR | tesseract.js (WebAssembly) |
+| Logging | Winston |
+| Build | tsup (CJS + ESM, targeting Node 22) |
+| Testing | Jest + ts-jest |
+| Linting | ESLint 9 (flat config) + TypeScript-ESLint |
+| Desktop GUI | Tauri + React (work in progress) |
 
-## 🤝 Contributing
+## Requirements
 
-Contributions are welcome! Please:
+- **Node.js >= 22**
+- No external system programs required
 
-1. Fork the project
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Create a Pull Request
+## License
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Sharp** - Image conversion
-- **LibreOffice** - Office documents
-- **Pandoc** - Markup conversion
-- **Ghostscript** - PDF operations
-- **Tesseract** - OCR functionality
-- **Tauri** - Desktop application
-
----
-
-**FileConverter** - Making file conversion easy and powerful! 🚀
+MIT
