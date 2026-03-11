@@ -3,6 +3,7 @@
 import { Command } from 'commander';
 import path from 'path';
 import { Converter } from './converter';
+import { ConversionOptions } from './types';
 import { getSupportedFormats } from './file-detector';
 import { listPresets } from './presets/image-presets';
 import { ConfigManager } from './config/config-manager';
@@ -94,17 +95,14 @@ program
         throw new Error('Must specify --compress, --merge or --split');
       }
 
-      const convertOptions: any = {
+      const convertOptions: ConversionOptions = {
         input: input!,
         output: options.out,
         format: 'pdf',
         operation,
         pages: options.pages,
+        ...(inputFiles ? { inputFiles } : {}),
       };
-
-      if (inputFiles) {
-        convertOptions.inputFiles = inputFiles;
-      }
 
       await converter.convert(convertOptions);
     } catch (error) {
