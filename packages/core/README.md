@@ -1,0 +1,103 @@
+# @fileconverter/core
+
+[![npm version](https://img.shields.io/npm/v/@fileconverter/core.svg)](https://www.npmjs.com/package/@fileconverter/core)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A fast, zero-config file conversion CLI. Images, documents, PDFs, and OCR — all powered by pure npm packages with **no external system dependencies**.
+
+## Install
+
+```bash
+# Run directly (no install needed)
+npx @fileconverter/core convert -i photo.png -o output/ --to jpg
+
+# Or install globally
+npm i -g @fileconverter/core
+```
+
+## Usage
+
+```bash
+# Convert an image
+converter convert -i photo.png -o output/ --to jpg
+
+# Batch convert a folder of PNGs to WebP
+converter convert -i screenshots/ -o optimized/ --to webp --quality 85 -r
+
+# Markdown to PDF
+converter convert -i README.md -o output/ --to pdf
+
+# Merge PDFs
+converter pdf --merge a.pdf b.pdf c.pdf -o merged.pdf
+
+# Split specific pages from a PDF
+converter pdf --split thesis.pdf --pages 1-5,10 -o excerpt.pdf
+
+# OCR: extract text from an image
+converter ocr -i scan.png -o result.txt --lang eng
+```
+
+## Supported Formats
+
+| Category | Input | Output |
+|----------|-------|--------|
+| **Images** | PNG, JPG, JPEG, WebP, TIFF, BMP, GIF, HEIC | JPG, PNG, WebP, TIFF |
+| **Documents** | Markdown, HTML, TXT | PDF, HTML, Markdown, TXT |
+| **PDF** | PDF | PDF (merge, split, optimize) |
+| **OCR** | PNG, JPG, TIFF, BMP, WebP | TXT |
+
+## Commands
+
+### `convert` — File conversion
+
+```bash
+converter convert -i <input> -o <output> --to <format> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `-i, --in <path>` | Input file or folder |
+| `-o, --out <path>` | Output folder |
+| `-t, --to <format>` | Target format (e.g. `png`, `pdf`, `html`) |
+| `-r, --recursive` | Search subfolders recursively |
+| `--dry-run` | Preview without converting |
+| `--concurrency <n>` | Parallel jobs (default: 1) |
+| `--retries <n>` | Retry attempts per job (default: 2) |
+| `--quality <1-100>` | Image quality |
+| `--max-width <px>` | Maximum image width |
+| `--max-height <px>` | Maximum image height |
+| `--strip-metadata` | Remove image metadata |
+| `--preset <name>` | Use a preset (e.g. `image/web`) |
+
+### `pdf` — PDF operations
+
+```bash
+converter pdf --compress <file> -o <output>
+converter pdf --merge <files...> -o <output>
+converter pdf --split <file> --pages <range> -o <output>
+```
+
+### `ocr` — Text extraction
+
+```bash
+converter ocr -i <image> -o <output.txt> [--lang <language>]
+```
+
+## Presets
+
+| Preset | Quality | Max Size | Strip Metadata |
+|--------|---------|----------|----------------|
+| `image/web` | 85 | 1920x1080 | Yes |
+| `image/print` | 95 | 3000x3000 | No |
+| `image/thumbnail` | 80 | 300x300 | Yes |
+| `image/social` | 90 | 1200x1200 | Yes |
+| `image/original` | 100 | — | No |
+
+## Requirements
+
+- **Node.js >= 18**
+- No external system programs required
+
+## License
+
+MIT — see [LICENSE](https://github.com/Marentius/FileConverter/blob/main/LICENSE)

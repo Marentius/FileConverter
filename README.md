@@ -7,28 +7,39 @@ A fast, zero-config file conversion CLI. Images, documents, PDFs, and OCR — al
 
 ## Quick Start
 
+### Install from npm
+
+```bash
+# Run directly (no install needed)
+npx @fileconverter/core convert -i photo.png -o output/ --to jpg
+
+# Or install globally
+npm i -g @fileconverter/core
+converter convert -i photo.png -o output/ --to jpg
+```
+
+### Build from source
+
 ```bash
 git clone https://github.com/Marentius/FileConverter.git
 cd FileConverter
 npm run setup
 ```
 
-That's it. No need to install LibreOffice, Pandoc, Ghostscript, or Tesseract.
+No need to install LibreOffice, Pandoc, Ghostscript, or Tesseract — everything runs on pure npm packages.
 
 ```bash
-cd packages/core
-
 # Convert an image
-node dist/cli.js convert -i photo.png -o output/ --to jpg
+converter convert -i photo.png -o output/ --to jpg
 
 # Markdown to PDF
-node dist/cli.js convert -i README.md -o output/ --to pdf
+converter convert -i README.md -o output/ --to pdf
 
 # Merge PDFs
-node dist/cli.js pdf --merge a.pdf b.pdf c.pdf -o merged.pdf
+converter pdf --merge a.pdf b.pdf c.pdf -o merged.pdf
 
 # OCR: extract text from an image
-node dist/cli.js ocr -i scan.png -o result.txt
+converter ocr -i scan.png -o result.txt
 ```
 
 ## Supported Formats
@@ -228,7 +239,7 @@ npx jest path/to/test.spec.ts
 
 ## Requirements
 
-- **Node.js >= 22**
+- **Node.js >= 18**
 - No external system programs required
 
 ## License
