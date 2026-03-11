@@ -31,10 +31,8 @@ export interface ConversionResult {
     preset?: string;
     mergedFiles?: number;
     pages?: string;
-    // Pandoc-spesifikke felter
     engine?: string;
     warning?: string;
-    // OCR-spesifikke felter
     searchable?: boolean;
     characters?: number;
   };

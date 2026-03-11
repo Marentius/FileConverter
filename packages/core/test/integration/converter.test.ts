@@ -71,32 +71,25 @@ describe('Converter Integration Tests', () => {
       }
     }, 60000);
 
-    it('should convert multiple files to DOCX', async () => {
+    it('should convert multiple files to HTML', async () => {
       const inputFiles = createTestFiles();
-      
+
       const result = await converter.convert({
         input: testInputDir,
         output: testOutputDir,
-        format: 'docx',
+        format: 'html',
         recursive: false,
         dryRun: false,
         concurrency: 1,
-        retries: 2
+        retries: 2,
       });
 
-      // Testen kan feile hvis adapters ikke er tilgjengelige, men det er OK
       expect(result.totalJobs).toBeGreaterThan(0);
-      
-      // Sjekk at output-filer eksisterer og har riktig størrelse (hvis konvertering lyktes)
+
       if (result.successfulJobs > 0) {
         const outputFiles = fs.readdirSync(testOutputDir);
         expect(outputFiles.length).toBeGreaterThan(0);
-        
-        outputFiles.forEach(file => {
-          const filePath = path.join(testOutputDir, file);
-          const stats = fs.statSync(filePath);
-          expect(stats.size).toBeGreaterThan(100); // DOCX-filer skal være større enn 100 bytes
-        });
+        expect(outputFiles.some(f => f.endsWith('.html'))).toBe(true);
       }
     }, 60000);
   });

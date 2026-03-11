@@ -14,22 +14,11 @@ const SUPPORTED_FORMATS = {
   'image/bmp': { ext: 'bmp', supported: true },
   'image/gif': { ext: 'gif', supported: true },
   
-  // Document formats (supported for conversion)
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': { ext: 'docx', supported: true },
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation': { ext: 'pptx', supported: true },
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': { ext: 'xlsx', supported: true },
+  // Document formats
   'application/pdf': { ext: 'pdf', supported: true },
-  'text/markdown': { ext: 'md', supported: true }, // Supported by Pandoc
-  'text/html': { ext: 'html', supported: true }, // Supported by Pandoc
-  'text/rtf': { ext: 'rtf', supported: true }, // Supported by Pandoc
-  'application/rtf': { ext: 'rtf', supported: true }, // Supported by Pandoc
-  'text/plain': { ext: 'txt', supported: true }, // Supported by Pandoc
-  
-  // Video/audio (optional)
-  'video/mp4': { ext: 'mp4', supported: true },
-  'video/quicktime': { ext: 'mov', supported: true },
-  'audio/mpeg': { ext: 'mp3', supported: true },
-  'audio/wav': { ext: 'wav', supported: true }
+  'text/markdown': { ext: 'md', supported: true },
+  'text/html': { ext: 'html', supported: true },
+  'text/plain': { ext: 'txt', supported: true }
 };
 
 // Extension to MIME mapping for fallback
@@ -43,19 +32,11 @@ const EXTENSION_TO_MIME: Record<string, string> = {
   'tif': 'image/tiff',
   'bmp': 'image/bmp',
   'gif': 'image/gif',
-  'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'pdf': 'application/pdf',
   'md': 'text/markdown',
   'html': 'text/html',
   'htm': 'text/html',
-  'rtf': 'application/rtf',
-  'txt': 'text/plain',
-  'mp4': 'video/mp4',
-  'mov': 'video/quicktime',
-  'mp3': 'audio/mpeg',
-  'wav': 'audio/wav'
+  'txt': 'text/plain'
 };
 
 export async function detectFileType(filePath: string): Promise<FileTypeInfo> {

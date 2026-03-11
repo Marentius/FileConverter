@@ -8,7 +8,11 @@ module.exports = {
   ],
   transform: {
     '^.+\\.ts$': 'ts-jest',
+    '^.+\\.m?js$': 'ts-jest',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(marked|turndown)/)',
+  ],
   moduleNameMapper: {
     '^file-type$': '<rootDir>/test/mocks/file-type-mock.js',
     '^p-queue$': '<rootDir>/test/mocks/p-queue-mock.js',

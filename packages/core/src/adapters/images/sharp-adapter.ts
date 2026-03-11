@@ -37,12 +37,6 @@ export class SharpAdapter extends BaseAdapter {
       let sharpInstance = sharp(plan.inputPath);
       logger.debug(`Sharp adapter: Created Sharp instance`);
 
-      // Håndter HEIC-filer - Sharp støtter ikke HEIC på Windows
-      if (plan.inputFormat.toLowerCase() === 'heic') {
-        logger.debug(`Sharp adapter: HEIC format not supported on Windows`);
-        throw new Error('HEIC-format støttes ikke av Sharp på Windows. Bruk ImageMagick-adapteren i stedet.');
-      }
-
       // Resize hvis nødvendig
       if (parameters.maxWidth || parameters.maxHeight) {
         sharpInstance = sharpInstance.resize({

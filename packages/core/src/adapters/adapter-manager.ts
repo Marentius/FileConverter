@@ -1,26 +1,22 @@
 import { BaseAdapter, ConversionParameters, ConversionResult } from './base-adapter';
 import { ConversionPlan } from '../types';
 import { SharpAdapter } from './images/sharp-adapter';
-import { ImageMagickAdapter } from './images/imagemagick-adapter';
-import { LibreOfficeAdapter } from './office/libreoffice-adapter';
-import { LibreOfficeOfficeAdapter } from './office/libreoffice-office-adapter';
 import { PdfAdapter } from './pdf/pdf-adapter';
-import { PandocAdapter } from './document/pandoc-adapter';
+import { DocumentAdapter } from './document/document-adapter';
 import { OcrAdapter } from './ocr/ocr-adapter';
 import logger from '../logger';
 
+/**
+ * Manages conversion adapters and routes conversion requests.
+ * All adapters use pure JavaScript/npm packages — no external system dependencies.
+ */
 export class AdapterManager {
   private adapters: BaseAdapter[] = [];
 
   constructor() {
-    // Register available adapters
-    // ImageMagick first for HEIC support on Windows
-    this.registerAdapter(new ImageMagickAdapter());
     this.registerAdapter(new SharpAdapter());
-    this.registerAdapter(new LibreOfficeAdapter());
-    this.registerAdapter(new LibreOfficeOfficeAdapter());
     this.registerAdapter(new PdfAdapter());
-    this.registerAdapter(new PandocAdapter());
+    this.registerAdapter(new DocumentAdapter());
     this.registerAdapter(new OcrAdapter());
   }
 
@@ -43,7 +39,7 @@ export class AdapterManager {
     parameters: ConversionParameters
   ): Promise<ConversionResult> {
     const adapter = this.getAdapter(plan.inputFormat, plan.outputFormat);
-    
+
     if (!adapter) {
       const error = `No adapter found for conversion from ${plan.inputFormat} to ${plan.outputFormat}`;
       logger.error(error);
@@ -51,13 +47,13 @@ export class AdapterManager {
         success: false,
         outputPath: plan.outputPath,
         duration: 0,
-        error
+        error,
       };
     }
 
     logger.info(`Using adapter: ${adapter.name}`, {
       inputFormat: plan.inputFormat,
-      outputFormat: plan.outputFormat
+      outputFormat: plan.outputFormat,
     });
 
     return await adapter.convert(plan, parameters);
@@ -81,7 +77,7 @@ export class AdapterManager {
             conversions.push({
               inputFormat,
               outputFormat,
-              adapter: adapter.name
+              adapter: adapter.name,
             });
           }
         }
@@ -99,7 +95,7 @@ export class AdapterManager {
     return this.adapters.map(adapter => ({
       name: adapter.name,
       supportedInputFormats: adapter.supportedInputFormats,
-      supportedOutputFormats: adapter.supportedOutputFormats
+      supportedOutputFormats: adapter.supportedOutputFormats,
     }));
   }
 }
