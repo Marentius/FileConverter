@@ -1,0 +1,11 @@
+src/
+test/
+tsup.config.ts
+jest.config.js
+eslint.config.mjs
+tsconfig.json
+*.test.ts
+*.spec.ts
+coverage/
+test-temp/
+.env*
