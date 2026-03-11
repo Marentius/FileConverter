@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.1.3...fileconverter-v1.2.0) (2026-03-11)
+
+
+### Features
+
+* add npm publish with OIDC trusted publishing and provenance ([beb59c6](https://github.com/Marentius/FileConverter/commit/beb59c609fc630c8f578c458ab99ff04a1283976))
+* add npm publish with OIDC trusted publishing and provenance ([9183280](https://github.com/Marentius/FileConverter/commit/91832807c0c3f11b0ce180f612bdc1562922b170))
+
 ## [1.1.3](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.1.2...fileconverter-v1.1.3) (2026-03-11)
 
 
