@@ -28,6 +28,7 @@ export class OcrAdapter extends BaseAdapter {
       if (!fs.existsSync(plan.inputPath)) {
         throw new Error(`Input file not found: ${plan.inputPath}`);
       }
+      this.validateInputFileSize(plan.inputPath);
 
       const outputDir = path.dirname(plan.outputPath);
       if (!fs.existsSync(outputDir)) {

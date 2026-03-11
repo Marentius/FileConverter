@@ -1,4 +1,5 @@
 import { ConversionPlan } from '../types';
+import { validateFileSize } from '../file-size-guard';
 
 export interface ConversionParameters {
   quality?: number | string; // number for bilde, string for OCR (fast/standard/high)
@@ -55,8 +56,15 @@ export abstract class BaseAdapter {
     );
   }
 
+  /**
+   * Validates that the input file size is within limits.
+   * Call this at the start of convert() in subclasses.
+   */
+  protected validateInputFileSize(filePath: string): void {
+    validateFileSize(filePath);
+  }
+
   validateParameters(parameters: ConversionParameters): void {
-    // Base implementation - subclasses can override
     if (parameters.quality !== undefined) {
       if (typeof parameters.quality === 'number' && (parameters.quality < 1 || parameters.quality > 100)) {
         throw new Error('Quality must be between 1 and 100');

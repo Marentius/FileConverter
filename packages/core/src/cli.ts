@@ -3,9 +3,11 @@
 import { Command } from 'commander';
 import path from 'path';
 import { Converter } from './converter';
+import { ConversionOptions } from './types';
 import { getSupportedFormats } from './file-detector';
 import { listPresets } from './presets/image-presets';
 import { ConfigManager } from './config/config-manager';
+import { parsePositiveInt, parseIntInRange } from './input-validation';
 import logger from './logger';
 import chalk from 'chalk';
 
@@ -27,15 +29,15 @@ program
   .option('-r, --recursive', 'Search recursively in subfolders')
   .option('--dry-run', 'Show what would happen without converting')
   .option('--concurrency <number>', 'Number of parallel jobs (default: 1)',
-    (value) => parseInt(value, 10))
+    (value) => parsePositiveInt(value, 'concurrency'))
   .option('--retries <number>', 'Number of retry attempts per job (default: 2)',
-    (value) => parseInt(value, 10))
+    (value) => parsePositiveInt(value, 'retries'))
   .option('--quality <number>', 'Quality for image conversion (1-100)',
-    (value) => parseInt(value, 10))
+    (value) => parseIntInRange(value, 'quality', 1, 100))
   .option('--max-width <number>', 'Maximum width for images',
-    (value) => parseInt(value, 10))
+    (value) => parsePositiveInt(value, 'max-width'))
   .option('--max-height <number>', 'Maximum height for images',
-    (value) => parseInt(value, 10))
+    (value) => parsePositiveInt(value, 'max-height'))
   .option('--strip-metadata', 'Remove metadata from images')
   .option('--preset <name>', 'Use preset (image/web, image/print, image/thumbnail, etc.)')
   .action(async (options) => {
@@ -93,17 +95,14 @@ program
         throw new Error('Must specify --compress, --merge or --split');
       }
 
-      const convertOptions: any = {
+      const convertOptions: ConversionOptions = {
         input: input!,
         output: options.out,
         format: 'pdf',
         operation,
         pages: options.pages,
+        ...(inputFiles ? { inputFiles } : {}),
       };
-
-      if (inputFiles) {
-        convertOptions.inputFiles = inputFiles;
-      }
 
       await converter.convert(convertOptions);
     } catch (error) {

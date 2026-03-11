@@ -6,6 +6,7 @@ import { JobQueue } from './job-queue';
 import { ProgressTracker } from './progress';
 import { ConversionParameters } from './adapters/base-adapter';
 import { ConfigManager } from './config/config-manager';
+import { validatePath } from './path-security';
 import logger from './logger';
 import chalk from 'chalk';
 
@@ -40,10 +41,11 @@ export class Converter {
     });
     
     try {
-      // Create output directory if it doesn't exist
-      if (!fs.existsSync(output)) {
-        fs.mkdirSync(output, { recursive: true });
-        logger.info(`Created output directory: ${output}`);
+      const resolvedOutput = path.resolve(output);
+
+      if (!fs.existsSync(resolvedOutput)) {
+        fs.mkdirSync(resolvedOutput, { recursive: true });
+        logger.info('Created output directory', { path: resolvedOutput });
       }
       
       // Scan for files and create conversion plan
