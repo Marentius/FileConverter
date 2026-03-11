@@ -4,6 +4,7 @@ export { scanForFiles } from './file-scanner';
 export { validatePath, sanitizeFilename } from './path-security';
 export { parsePositiveInt, parseIntInRange } from './input-validation';
 export { sanitizeLogValue } from './log-sanitizer';
+export { validateFileSize, DEFAULT_MAX_FILE_SIZE } from './file-size-guard';
 export { JobQueue } from './job-queue';
 export { ProgressTracker } from './progress';
 export { AdapterManager } from './adapters/adapter-manager';

@@ -18,6 +18,7 @@ export class SharpAdapter extends BaseAdapter {
     
     try {
       this.validateParameters(parameters);
+      this.validateInputFileSize(plan.inputPath);
       
       logger.debug(`Sharp adapter: Starting conversion`, {
         input: plan.inputPath,

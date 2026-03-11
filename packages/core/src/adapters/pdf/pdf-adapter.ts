@@ -23,6 +23,7 @@ export class PdfAdapter extends BaseAdapter {
 
     try {
       this.validateParameters(parameters);
+      this.validateInputFileSize(plan.inputPath);
 
       const outputDir = path.dirname(plan.outputPath);
       if (!fs.existsSync(outputDir)) {
