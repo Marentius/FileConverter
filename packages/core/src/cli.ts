@@ -9,12 +9,14 @@ import { ConfigManager } from './config/config-manager';
 import logger from './logger';
 import chalk from 'chalk';
 
+declare const __PKG_VERSION__: string;
+
 const program = new Command();
 
 program
   .name('converter')
   .description('Universal file conversion tool with batch support')
-  .version('1.0.0');
+  .version(__PKG_VERSION__);
 
 program
   .command('convert')
