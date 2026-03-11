@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.1.1...fileconverter-v1.1.2) (2026-03-11)
+
+
+### Bug Fixes
+
+* use PAT for release-please to trigger CI on release PRs ([cbd435f](https://github.com/Marentius/FileConverter/commit/cbd435fcec363d821d286fd18f4ca0e26b0c62f4))
+
 ## [1.1.1](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.1.0...fileconverter-v1.1.1) (2026-03-11)
 
 

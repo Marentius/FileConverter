@@ -1,6 +1,6 @@
 {
   "name": "fileconverter",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Universelt filkonverteringsverktøy med batch-støtte",
   "private": true,
   "workspaces": [
