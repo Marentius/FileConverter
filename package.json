@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "setup": "npm install && cd packages/core && npm install && npm run build && cd ../gui && npm install && npx tauri build && cd ../.. && npm link",
+    "setup": "npm install && npm run core:build",
     "build": "npm run build --workspaces",
     "dev": "npm run dev --workspaces",
     "test": "npm run test --workspaces",
