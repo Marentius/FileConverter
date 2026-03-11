@@ -166,18 +166,30 @@ export class PdfAdapter extends BaseAdapter {
    */
   private parsePageRanges(rangeStr: string, totalPages: number): number[] {
     const indices: number[] = [];
-    const parts = rangeStr.split(',').map(s => s.trim());
+    const parts = rangeStr.split(',').map(s => s.trim()).filter(Boolean);
 
     for (const part of parts) {
       if (part.includes('-')) {
         const [startStr, endStr] = part.split('-');
-        const start = Math.max(1, parseInt(startStr, 10));
-        const end = Math.min(totalPages, parseInt(endStr, 10));
-        for (let i = start; i <= end; i++) {
+        const start = parseInt(startStr, 10);
+        const end = parseInt(endStr, 10);
+
+        if (isNaN(start) || isNaN(end)) {
+          throw new Error(`Invalid page range: '${part}'`);
+        }
+
+        const clampedStart = Math.max(1, start);
+        const clampedEnd = Math.min(totalPages, end);
+        for (let i = clampedStart; i <= clampedEnd; i++) {
           indices.push(i - 1);
         }
       } else {
         const page = parseInt(part, 10);
+
+        if (isNaN(page)) {
+          throw new Error(`Invalid page number: '${part}'`);
+        }
+
         if (page >= 1 && page <= totalPages) {
           indices.push(page - 1);
         }
