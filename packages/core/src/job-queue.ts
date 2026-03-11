@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import PQueue from 'p-queue';
 import { ConversionJob, ConversionPlan, JobStatus, ConversionResult, JobLog } from './types';
 import { AdapterManager } from './adapters/adapter-manager';
@@ -181,6 +182,6 @@ export class JobQueue extends EventEmitter {
   }
 
   private generateJobId(): string {
-    return `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `job_${Date.now()}_${randomBytes(6).toString('hex')}`;
   }
 }
