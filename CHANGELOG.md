@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.1.0...fileconverter-v1.1.1) (2026-03-11)
+
+
+### Bug Fixes
+
+* inject version from package.json at build time instead of hardcoding ([0b7250c](https://github.com/Marentius/FileConverter/commit/0b7250c2565b7aff334c3f52aa2d2ee2bffd93a4))
+
 ## [1.1.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.0.0...fileconverter-v1.1.0) (2026-03-11)
 
 
