@@ -6,8 +6,13 @@
  * @returns A sanitized string safe for log output
  */
 export function sanitizeLogValue(value: string): string {
+  // eslint-disable-next-line no-control-regex
+  const ANSI_ESCAPE = /\u001b\[[0-9;]*[a-zA-Z]/g;
+  // eslint-disable-next-line no-control-regex
+  const CONTROL_CHARS = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g;
+
   return value
-    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '')
+    .replace(ANSI_ESCAPE, '')
+    .replace(CONTROL_CHARS, '')
     .replace(/[\n\r\t]/g, ' ');
 }
