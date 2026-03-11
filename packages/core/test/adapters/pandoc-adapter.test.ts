@@ -1,8 +1,19 @@
 import { jest } from '@jest/globals';
 import { PandocAdapter } from '../../src/adapters/document/pandoc-adapter';
 import { createTestFile, cleanupTestFiles, getTestFilePath } from '../setup';
-import path from 'path';
+import { execSync } from 'child_process';
 import fs from 'fs';
+
+function isPandocAvailable(): boolean {
+  try {
+    execSync('pandoc --version', { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const pandocAvailable = isPandocAvailable();
 
 describe('PandocAdapter', () => {
   let adapter: PandocAdapter;
@@ -37,7 +48,9 @@ describe('PandocAdapter', () => {
   });
 
   describe('convert', () => {
-    it('should convert markdown to PDF', async () => {
+    const itIfPandoc = pandocAvailable ? it : it.skip;
+
+    itIfPandoc('should convert markdown to PDF', async () => {
       const plan = {
         inputPath: testInputPath,
         outputPath: testOutputPath,
@@ -57,7 +70,7 @@ describe('PandocAdapter', () => {
       expect(fs.statSync(testOutputPath).size).toBeGreaterThan(0);
     }, 30000);
 
-    it('should convert markdown to DOCX', async () => {
+    itIfPandoc('should convert markdown to DOCX', async () => {
       const docxOutputPath = getTestFilePath('pandoc-test-output.docx');
       const plan = {
         inputPath: testInputPath,
@@ -74,7 +87,7 @@ describe('PandocAdapter', () => {
       expect(fs.statSync(docxOutputPath).size).toBeGreaterThan(0);
     }, 30000);
 
-    it('should handle conversion errors gracefully', async () => {
+    itIfPandoc('should handle conversion errors gracefully', async () => {
       const nonExistentFile = getTestFilePath('pandoc-non-existent.md');
       const plan = {
         inputPath: nonExistentFile,
