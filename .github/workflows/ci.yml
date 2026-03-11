@@ -113,13 +113,14 @@ jobs:
         npm run build
     
     - name: Create binary package
+      shell: bash
       run: |
         cd packages/core
         mkdir -p dist-bin
         cp -r dist/* dist-bin/
         cp package.json dist-bin/
         cd dist-bin
-        npm install --production
+        npm install --omit=dev
         rm -rf node_modules/.cache
     
     - name: Upload binary artifacts
