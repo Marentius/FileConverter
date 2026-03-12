@@ -19,9 +19,9 @@
     "core:dev": "cd packages/core && npm run dev"
   },
   "devDependencies": {
-    "@types/node": "^22.19.15",
-    "@eslint/js": "^9.39.4",
-    "eslint": "^9.39.4",
+    "@types/node": "^25.5.0",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.3",
     "typescript-eslint": "^8.57.0",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3"
