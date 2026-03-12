@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.2.0...fileconverter-v1.2.1) (2026-03-12)
+
+
+### Bug Fixes
+
+* update jest scripts to use --testPathPatterns for Jest 30 ([417d0fe](https://github.com/Marentius/FileConverter/commit/417d0fe16c1a5a993072c3a3371dce1d9643ca13))
+* update jest scripts to use --testPathPatterns for Jest 30 ([bb599ea](https://github.com/Marentius/FileConverter/commit/bb599ea3d70509803b00d049c596f4619b619385))
+
 ## [1.2.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.1.3...fileconverter-v1.2.0) (2026-03-11)
 
 
