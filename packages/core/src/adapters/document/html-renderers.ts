@@ -9,21 +9,13 @@ import fs from 'fs';
  * @returns Plain text content
  */
 export function stripHtml(html: string): string {
-  let text = html;
-
-  const TAG_PATTERN = /<\/?[a-zA-Z!][^>]*>/g;
-
-  let previous;
-  do {
-    previous = text;
-    text = text
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(TAG_PATTERN, '');
-  } while (text !== previous);
+  const text = html
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/<\/?[a-zA-Z!][^>]*>/g, '')
+    .replace(/&amp;/g, '&');
 
   return text.replace(/\n{3,}/g, '\n\n').trim();
 }
