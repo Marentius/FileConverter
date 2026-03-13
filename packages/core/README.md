@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@fileconverter/core.svg)](https://www.npmjs.com/package/@fileconverter/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A fast, zero-config file conversion CLI. Images, documents, PDFs, and OCR — all powered by pure npm packages with **no external system dependencies**.
+A fast, zero-config file conversion CLI. Images, documents, office files, PDFs, and OCR — all powered by pure npm packages with **no external system dependencies**.
 
 ## Install
 
@@ -20,6 +20,15 @@ npm i -g @fileconverter/core
 ```bash
 # Convert an image
 converter convert -i photo.png -o output/ --to jpg
+
+# Word to PDF
+converter convert -i report.docx -o output/ --to pdf
+
+# Excel to HTML
+converter convert -i data.xlsx -o output/ --to html
+
+# PowerPoint to text
+converter convert -i slides.pptx -o output/ --to txt
 
 # Batch convert a folder of PNGs to WebP
 converter convert -i screenshots/ -o optimized/ --to webp --quality 85 -r
@@ -42,6 +51,7 @@ converter ocr -i scan.png -o result.txt --lang eng
 | Category | Input | Output |
 |----------|-------|--------|
 | **Images** | PNG, JPG, JPEG, WebP, TIFF, BMP, GIF, HEIC | JPG, PNG, WebP, TIFF |
+| **Office** | DOCX, XLSX, PPTX, ODT, RTF | PDF, HTML, TXT, Markdown |
 | **Documents** | Markdown, HTML, TXT | PDF, HTML, Markdown, TXT |
 | **PDF** | PDF | PDF (merge, split, optimize) |
 | **OCR** | PNG, JPG, TIFF, BMP, WebP | TXT |

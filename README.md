@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js CI](https://github.com/Marentius/FileConverter/actions/workflows/ci.yml/badge.svg)](https://github.com/Marentius/FileConverter/actions/workflows/ci.yml)
 
-A fast, zero-config file conversion CLI. Images, documents, PDFs, and OCR — all powered by npm packages with **no external system dependencies**.
+A fast, zero-config file conversion CLI. Images, office documents, PDFs, and OCR — all powered by npm packages with **no external system dependencies**.
 
 ## Quick Start
 
@@ -32,6 +32,12 @@ No need to install LibreOffice, Pandoc, Ghostscript, or Tesseract — everything
 # Convert an image
 converter convert -i photo.png -o output/ --to jpg
 
+# Word to PDF
+converter convert -i report.docx -o output/ --to pdf
+
+# Excel to HTML
+converter convert -i data.xlsx -o output/ --to html
+
 # Markdown to PDF
 converter convert -i README.md -o output/ --to pdf
 
@@ -47,6 +53,7 @@ converter ocr -i scan.png -o result.txt
 | Category | Input | Output |
 |----------|-------|--------|
 | **Images** | PNG, JPG, JPEG, WebP, TIFF, BMP, GIF, HEIC | JPG, PNG, WebP, TIFF |
+| **Office** | DOCX, XLSX, PPTX, ODT, RTF | PDF, HTML, TXT, Markdown |
 | **Documents** | Markdown, HTML, TXT | PDF, HTML, Markdown, TXT |
 | **PDF** | PDF | PDF (merge, split, optimize) |
 | **OCR** | PNG, JPG, TIFF, BMP, WebP | TXT |
@@ -139,6 +146,18 @@ converter preset create -n "my-preset" -d "Small JPGs" -t image -p "quality=70;m
 # Batch convert a folder of PNGs to WebP
 converter convert -i screenshots/ -o optimized/ --to webp --quality 85 -r
 
+# Word document to PDF
+converter convert -i report.docx -o output/ --to pdf
+
+# Excel spreadsheet to HTML table
+converter convert -i budget.xlsx -o output/ --to html
+
+# PowerPoint to plain text
+converter convert -i slides.pptx -o output/ --to txt
+
+# RTF to Markdown
+converter convert -i notes.rtf -o output/ --to md
+
 # Markdown to HTML
 converter convert -i docs/ -o site/ --to html -r
 
@@ -166,6 +185,7 @@ FileConverter/
 │   │   │   ├── adapters/
 │   │   │   │   ├── images/    # Sharp
 │   │   │   │   ├── document/  # marked + pdfkit + turndown
+│   │   │   │   ├── office/    # mammoth + exceljs + officeparser
 │   │   │   │   ├── pdf/       # pdf-lib
 │   │   │   │   └── ocr/       # tesseract.js
 │   │   │   ├── presets/       # Image presets
@@ -185,6 +205,7 @@ The `AdapterManager` selects the right adapter based on input/output format. Eac
 |---------|---------|---------|
 | `SharpAdapter` | sharp | Image format conversion, resize, quality |
 | `DocumentAdapter` | marked, pdfkit, turndown | MD/HTML/TXT conversions |
+| `OfficeAdapter` | mammoth, exceljs, officeparser | DOCX/XLSX/PPTX/ODT/RTF conversions |
 | `PdfAdapter` | pdf-lib | PDF merge, split, optimize |
 | `OcrAdapter` | tesseract.js | Image-to-text extraction |
 
@@ -226,6 +247,9 @@ npx jest path/to/test.spec.ts
 |-----------|---------|
 | CLI framework | Commander.js |
 | Image processing | Sharp |
+| Word documents | mammoth (DOCX to HTML) |
+| Spreadsheets | ExcelJS (XLSX to HTML tables) |
+| Presentations/ODT | officeparser (text extraction) |
 | PDF manipulation | pdf-lib |
 | PDF generation | PDFKit |
 | Markdown parsing | marked |
@@ -234,7 +258,7 @@ npx jest path/to/test.spec.ts
 | Logging | Winston |
 | Build | tsup (CJS + ESM, targeting Node 22) |
 | Testing | Jest + ts-jest |
-| Linting | ESLint 9 (flat config) + TypeScript-ESLint |
+| Linting | ESLint 10 (flat config) + TypeScript-ESLint |
 | Desktop GUI | Tauri + React (work in progress) |
 
 ## Requirements
