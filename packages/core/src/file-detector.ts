@@ -18,7 +18,14 @@ const SUPPORTED_FORMATS = {
   'application/pdf': { ext: 'pdf', supported: true },
   'text/markdown': { ext: 'md', supported: true },
   'text/html': { ext: 'html', supported: true },
-  'text/plain': { ext: 'txt', supported: true }
+  'text/plain': { ext: 'txt', supported: true },
+
+  // Office formats
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': { ext: 'docx', supported: true },
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': { ext: 'xlsx', supported: true },
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': { ext: 'pptx', supported: true },
+  'application/vnd.oasis.opendocument.text': { ext: 'odt', supported: true },
+  'application/rtf': { ext: 'rtf', supported: true },
 };
 
 // Extension to MIME mapping for fallback
@@ -36,7 +43,12 @@ const EXTENSION_TO_MIME: Record<string, string> = {
   'md': 'text/markdown',
   'html': 'text/html',
   'htm': 'text/html',
-  'txt': 'text/plain'
+  'txt': 'text/plain',
+  'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'odt': 'application/vnd.oasis.opendocument.text',
+  'rtf': 'application/rtf',
 };
 
 export async function detectFileType(filePath: string): Promise<FileTypeInfo> {

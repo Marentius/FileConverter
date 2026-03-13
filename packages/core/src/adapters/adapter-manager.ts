@@ -4,6 +4,7 @@ import { SharpAdapter } from './images/sharp-adapter';
 import { PdfAdapter } from './pdf/pdf-adapter';
 import { DocumentAdapter } from './document/document-adapter';
 import { OcrAdapter } from './ocr/ocr-adapter';
+import { OfficeAdapter } from './office/office-adapter';
 import logger from '../logger';
 
 /**
@@ -18,6 +19,7 @@ export class AdapterManager {
     this.registerAdapter(new PdfAdapter());
     this.registerAdapter(new DocumentAdapter());
     this.registerAdapter(new OcrAdapter());
+    this.registerAdapter(new OfficeAdapter());
   }
 
   registerAdapter(adapter: BaseAdapter): void {
