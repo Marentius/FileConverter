@@ -103,7 +103,7 @@ function isSupportedFormat(format: string): boolean {
     // Image formats
     'png', 'jpg', 'jpeg', 'webp', 'tiff', 'bmp', 'gif', 'heic',
     // Document formats
-    'docx', 'pptx', 'xlsx', 'pdf', 'md', 'html', 'rtf', 'txt',
+    'docx', 'pptx', 'xlsx', 'odt', 'pdf', 'md', 'html', 'rtf', 'txt',
     // Video/audio
     'mp4', 'mov', 'mp3', 'wav'
   ];

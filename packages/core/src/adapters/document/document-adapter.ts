@@ -1,19 +1,24 @@
 import { marked } from 'marked';
-import PDFDocument from 'pdfkit';
-import TurndownService from 'turndown';
 import fs from 'fs';
 import path from 'path';
 import { BaseAdapter, ConversionParameters, ConversionResult } from '../base-adapter';
 import { ConversionPlan } from '../../types';
 import logger from '../../logger';
+import {
+  stripHtml,
+  stripMarkdown,
+  renderTextToPdf,
+  wrapInHtmlDocument,
+  htmlToMarkdown,
+} from './html-renderers';
 
 /**
  * Document adapter using pure JavaScript libraries.
- * Replaces Pandoc for Markdown/HTML/TXT conversions.
+ * Handles Markdown/HTML/TXT conversions.
  *
  * - marked: Markdown -> HTML
- * - pdfkit: Text/HTML -> PDF
- * - turndown: HTML -> Markdown
+ * - pdfkit (via html-renderers): Text/HTML -> PDF
+ * - turndown (via html-renderers): HTML -> Markdown
  */
 export class DocumentAdapter extends BaseAdapter {
   readonly name = 'document';
@@ -93,30 +98,15 @@ export class DocumentAdapter extends BaseAdapter {
     }
   }
 
-  /**
-   * Convert input content to PDF using pdfkit.
-   * Markdown is first converted to plain text lines for rendering.
-   */
   private convertToPdf(content: string, inputFormat: string, outputPath: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const doc = new PDFDocument({ margin: 50 });
-      const stream = fs.createWriteStream(outputPath);
+    let textContent = content;
+    if (inputFormat === 'md' || inputFormat === 'markdown') {
+      textContent = stripMarkdown(content);
+    } else if (inputFormat === 'html' || inputFormat === 'htm') {
+      textContent = stripHtml(content);
+    }
 
-      doc.pipe(stream);
-
-      let textContent = content;
-      if (inputFormat === 'md' || inputFormat === 'markdown') {
-        textContent = this.stripMarkdown(content);
-      } else if (inputFormat === 'html' || inputFormat === 'htm') {
-        textContent = this.stripHtml(content);
-      }
-
-      doc.fontSize(12).text(textContent, { lineGap: 4 });
-      doc.end();
-
-      stream.on('finish', resolve);
-      stream.on('error', reject);
-    });
+    return renderTextToPdf(textContent, outputPath);
   }
 
   private convertToHtml(content: string, inputFormat: string, outputPath: string): void {
@@ -124,10 +114,10 @@ export class DocumentAdapter extends BaseAdapter {
 
     if (inputFormat === 'md' || inputFormat === 'markdown') {
       html = marked.parse(content, { async: false }) as string;
-      html = `<!DOCTYPE html>\n<html>\n<head><meta charset="utf-8"></head>\n<body>\n${html}\n</body>\n</html>`;
+      html = wrapInHtmlDocument(html);
     } else if (inputFormat === 'txt') {
       const escaped = content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      html = `<!DOCTYPE html>\n<html>\n<head><meta charset="utf-8"></head>\n<body>\n<pre>${escaped}</pre>\n</body>\n</html>`;
+      html = wrapInHtmlDocument(`<pre>${escaped}</pre>`);
     } else {
       html = content;
     }
@@ -139,10 +129,7 @@ export class DocumentAdapter extends BaseAdapter {
     let md: string;
 
     if (inputFormat === 'html' || inputFormat === 'htm') {
-      const turndown = new TurndownService();
-      md = turndown.turndown(content);
-    } else if (inputFormat === 'txt') {
-      md = content;
+      md = htmlToMarkdown(content);
     } else {
       md = content;
     }
@@ -154,32 +141,13 @@ export class DocumentAdapter extends BaseAdapter {
     let text: string;
 
     if (inputFormat === 'html' || inputFormat === 'htm') {
-      text = this.stripHtml(content);
+      text = stripHtml(content);
     } else if (inputFormat === 'md' || inputFormat === 'markdown') {
-      text = this.stripMarkdown(content);
+      text = stripMarkdown(content);
     } else {
       text = content;
     }
 
     fs.writeFileSync(outputPath, text, 'utf-8');
-  }
-
-  /** Strip HTML tags and decode basic entities. */
-  private stripHtml(html: string): string {
-    return html
-      .replace(/<[^>]*>/g, '')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
-  }
-
-  /** Convert markdown to plain text by stripping syntax. */
-  private stripMarkdown(md: string): string {
-    const html = marked.parse(md, { async: false }) as string;
-    return this.stripHtml(html);
   }
 }

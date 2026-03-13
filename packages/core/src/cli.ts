@@ -145,10 +145,15 @@ program
     console.log('');
 
     const imageFormats = ['png', 'jpg', 'jpeg', 'webp', 'tiff', 'bmp', 'gif', 'heic'];
+    const officeFormats = ['docx', 'xlsx', 'pptx', 'odt', 'rtf'];
     const documentFormats = ['pdf', 'md', 'html', 'txt'];
 
     console.log(chalk.bold.green('Image Formats:'));
     console.log('  ' + imageFormats.filter(f => formats.includes(f)).join(', '));
+    console.log('');
+
+    console.log(chalk.bold.green('Office Formats:'));
+    console.log('  ' + officeFormats.filter(f => formats.includes(f)).join(', '));
     console.log('');
 
     console.log(chalk.bold.green('Document Formats:'));
