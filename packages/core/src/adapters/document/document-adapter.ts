@@ -56,6 +56,9 @@ export class DocumentAdapter extends BaseAdapter {
       });
 
       if (outputFmt === 'pdf') {
+        logger.warn(
+          'PDF output uses basic text rendering. Formatting, images, and tables will not be preserved. For best results, convert to HTML instead.'
+        );
         await this.convertToPdf(inputContent, inputFmt, plan.outputPath);
       } else if (outputFmt === 'html' || outputFmt === 'htm') {
         this.convertToHtml(inputContent, inputFmt, plan.outputPath);

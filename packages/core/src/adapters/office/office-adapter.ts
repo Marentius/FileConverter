@@ -56,6 +56,12 @@ export class OfficeAdapter extends BaseAdapter {
         outputFormat: outputFmt,
       });
 
+      if (outputFmt === 'pdf') {
+        logger.warn(
+          'PDF output uses basic text rendering. Formatting, images, and tables will not be preserved. For best results, convert to HTML instead.'
+        );
+      }
+
       const html = await this.readToHtml(plan.inputPath, inputFmt);
       await this.writeOutput(html, outputFmt, plan.outputPath);
 
