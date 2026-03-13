@@ -1,23 +1,25 @@
 import { marked } from 'marked';
 import PDFDocument from 'pdfkit';
+import sanitizeHtml from 'sanitize-html';
 import TurndownService from 'turndown';
 import fs from 'fs';
 
 /**
  * Strips HTML tags and decodes basic entities to produce plain text.
+ * Uses sanitize-html to avoid incomplete sanitization vulnerabilities (CWE-79).
  * @param html - Raw HTML string
  * @returns Plain text content
  */
 export function stripHtml(html: string): string {
-  const text = html
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/<\/?[a-zA-Z!][^>]*>/g, '')
-    .replace(/&amp;/g, '&');
+  const text = sanitizeHtml(html, {
+    allowedTags: [],
+    allowedAttributes: {},
+  });
 
-  return text.replace(/\n{3,}/g, '\n\n').trim();
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 /**
