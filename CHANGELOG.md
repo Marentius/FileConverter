@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.3.1...fileconverter-v1.3.2) (2026-03-13)
+
+
+### Bug Fixes
+
+* warn users about limited PDF rendering quality ([7105939](https://github.com/Marentius/FileConverter/commit/710593989c6068515597541bb202d3133e6b6eed))
+
 ## [1.3.1](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.3.0...fileconverter-v1.3.1) (2026-03-13)
 
 
