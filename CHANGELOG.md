@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.2.1...fileconverter-v1.3.0) (2026-03-13)
+
+
+### Features
+
+* add office document format support (DOCX, XLSX, PPTX, ODT, RTF) ([b8e8373](https://github.com/Marentius/FileConverter/commit/b8e83730d101d298e40b9d27003fe9f5b32d77a8))
+* show office formats in CLI formats command ([1bac66d](https://github.com/Marentius/FileConverter/commit/1bac66dca4ffbfcc2545b56bb8bbd599636b00a4))
+
 ## [1.2.1](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.2.0...fileconverter-v1.2.1) (2026-03-12)
 
 
