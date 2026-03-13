@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.1](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.3.0...fileconverter-v1.3.1) (2026-03-13)
+
+
+### Bug Fixes
+
+* resolve CodeQL alerts in stripHtml and CI workflow ([51773e0](https://github.com/Marentius/FileConverter/commit/51773e047ef6bda6cb9017b3cfa378f86638c64d))
+* resolve CodeQL security alerts in stripHtml and CI workflow ([e1be449](https://github.com/Marentius/FileConverter/commit/e1be44971e5c813f75ce3346953cef586d70a24b))
+* resolve CodeQL security alerts in stripHtml and CI workflow ([c43747b](https://github.com/Marentius/FileConverter/commit/c43747bc7860fd26fcd3a7386edebb1750370889))
+* resolve CodeQL security alerts in stripHtml and CI workflow ([a00c2ab](https://github.com/Marentius/FileConverter/commit/a00c2abde07102bd172b9d434987fdc93cc863c5))
+
 ## [1.3.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.2.1...fileconverter-v1.3.0) (2026-03-13)
 
 
