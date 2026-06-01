@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.4](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.3.3...fileconverter-v1.3.4) (2026-06-01)
+
+
+### Bug Fixes
+
+* **core:** export OfficeAdapter from public API ([6a381f6](https://github.com/Marentius/FileConverter/commit/6a381f615877fb83f1c5c6c67dc45afd88e65726))
+* **core:** export OfficeAdapter from public API ([e08883b](https://github.com/Marentius/FileConverter/commit/e08883b826928bd0e9acccf7c01ec8036ba7cb7d))
+* **gui:** remove hardcoded converter paths ([9bdb40c](https://github.com/Marentius/FileConverter/commit/9bdb40c5ad220775123118cef01fd016f9458071))
+* **gui:** remove hardcoded converter paths ([1f3b9ea](https://github.com/Marentius/FileConverter/commit/1f3b9eaa3d20b6a0dd6c42022a0bcca663859632))
+
 ## [1.3.3](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.3.2...fileconverter-v1.3.3) (2026-06-01)
 
 
