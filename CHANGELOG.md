@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.3](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.3.2...fileconverter-v1.3.3) (2026-06-01)
+
+
+### Bug Fixes
+
+* **deps:** patch vulnerable transitive npm dependencies ([b414d6c](https://github.com/Marentius/FileConverter/commit/b414d6cc236bea3a3019c9bc49c1b70777739cf4))
+* **deps:** patch vulnerable transitive npm dependencies ([6aa896b](https://github.com/Marentius/FileConverter/commit/6aa896b3e9b421badd7cdacbd4e41e1ab201cb1c))
+* **deps:** update vulnerable Rust dependencies ([311b614](https://github.com/Marentius/FileConverter/commit/311b614c74a67aa88d43cbf4f013caa0490b765f))
+* **deps:** update vulnerable Rust dependencies ([a7ac058](https://github.com/Marentius/FileConverter/commit/a7ac058a8063f4090809530a5dae1bb70f0d00ff))
+
 ## [1.3.2](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.3.1...fileconverter-v1.3.2) (2026-03-13)
 
 
