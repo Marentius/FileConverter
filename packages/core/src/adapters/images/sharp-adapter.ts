@@ -7,7 +7,7 @@ import logger from '../../logger';
 
 export class SharpAdapter extends BaseAdapter {
   readonly name = 'sharp';
-  readonly supportedInputFormats = ['heic', 'jpg', 'jpeg', 'png', 'webp', 'tiff', 'bmp', 'gif'];
+  readonly supportedInputFormats = ['heic', 'jpg', 'jpeg', 'png', 'webp', 'tiff', 'bmp', 'gif', 'svg'];
   readonly supportedOutputFormats = ['jpg', 'jpeg', 'png', 'webp', 'tiff'];
 
   async convert(

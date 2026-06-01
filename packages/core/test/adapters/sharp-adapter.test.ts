@@ -34,6 +34,11 @@ describe('SharpAdapter', () => {
       expect(result).toBe(true);
     });
 
+    it('should support SVG to PNG conversion', () => {
+      const result = adapter.canHandle('svg', 'png');
+      expect(result).toBe(true);
+    });
+
     it('should not support unsupported conversions', () => {
       const result = adapter.canHandle('xyz', 'abc');
       expect(result).toBe(false);
@@ -87,6 +92,31 @@ describe('SharpAdapter', () => {
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
     });
+
+    it('should convert SVG to PNG', async () => {
+      const svgInputPath = getTestFilePath('sharp-test.svg');
+      const pngOutputPath = getTestFilePath('sharp-test-output.png');
+
+      fs.writeFileSync(
+        svgInputPath,
+        '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="red"/></svg>'
+      );
+
+      const plan = {
+        inputPath: svgInputPath,
+        outputPath: pngOutputPath,
+        inputFormat: 'svg',
+        outputFormat: 'png',
+        supported: true
+      };
+
+      const result = await adapter.convert(plan, {});
+
+      expect(result.success).toBe(true);
+      expect(fs.existsSync(pngOutputPath)).toBe(true);
+      expect(fs.statSync(pngOutputPath).size).toBeGreaterThan(0);
+      expect(result.metadata?.format).toBe('png');
+    }, 30000);
   });
 
   describe('supportedFormats', () => {
@@ -94,6 +124,7 @@ describe('SharpAdapter', () => {
       expect(adapter.supportedInputFormats).toContain('png');
       expect(adapter.supportedInputFormats).toContain('jpg');
       expect(adapter.supportedInputFormats).toContain('webp');
+      expect(adapter.supportedInputFormats).toContain('svg');
     });
 
     it('should return supported output formats', () => {
