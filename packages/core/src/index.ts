@@ -12,6 +12,7 @@ export { SharpAdapter } from './adapters/images/sharp-adapter';
 export { PdfAdapter } from './adapters/pdf/pdf-adapter';
 export { DocumentAdapter } from './adapters/document/document-adapter';
 export { OcrAdapter } from './adapters/ocr/ocr-adapter';
+export { OfficeAdapter } from './adapters/office/office-adapter';
 export { ConfigManager } from './config/config-manager';
 export { listPresets, getPreset } from './presets/image-presets';
 export { logger } from './logger';
