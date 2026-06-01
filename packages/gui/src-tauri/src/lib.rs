@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
+use std::env;
+use std::path::PathBuf;
 use std::process::Command;
-use std::path::Path;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConversionJob {
@@ -20,40 +21,85 @@ pub struct ConversionResult {
     pub jobs: Vec<ConversionJob>,
 }
 
-#[tauri::command]
-async fn convert_files(input_paths: Vec<String>, output_dir: String, format: String) -> Result<ConversionResult, String> {
-    // Call the CLI directly with the actual file paths
-    // Try to find converter in common locations
-    let converter_paths = vec![
-        "converter",
-        "C:\\Users\\vetle\\AppData\\Roaming\\npm\\converter.cmd",
-        "C:\\Users\\vetle\\AppData\\Roaming\\npm\\converter",
-        "C:\\Program Files\\nodejs\\converter.cmd",
-        "C:\\Program Files\\nodejs\\converter"
-    ];
-    
-    let mut result = None;
-    for path in converter_paths {
-        match Command::new(path)
-            .args(&["convert", "--in", &input_paths.join(","), "--out", &output_dir, "--to", &format])
-            .output() {
-            Ok(output) => {
-                result = Some(output);
-                break;
+fn converter_paths() -> Vec<PathBuf> {
+    let mut paths = Vec::new();
+
+    if let Some(configured_path) = env::var_os("FILECONVERTER_CLI") {
+        paths.push(PathBuf::from(configured_path));
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        paths.push(PathBuf::from("converter.cmd"));
+        paths.push(PathBuf::from("converter.exe"));
+
+        if let Some(app_data) = env::var_os("APPDATA") {
+            let npm_dir = PathBuf::from(app_data).join("npm");
+            paths.push(npm_dir.join("converter.cmd"));
+            paths.push(npm_dir.join("converter"));
+        }
+
+        for env_name in ["ProgramFiles", "ProgramFiles(x86)"] {
+            if let Some(program_files) = env::var_os(env_name) {
+                let node_dir = PathBuf::from(program_files).join("nodejs");
+                paths.push(node_dir.join("converter.cmd"));
+                paths.push(node_dir.join("converter"));
             }
+        }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        paths.push(PathBuf::from("converter"));
+    }
+
+    paths
+}
+
+fn run_converter(args: &[&str]) -> Result<std::process::Output, String> {
+    let mut attempted_paths = Vec::new();
+
+    for path in converter_paths() {
+        attempted_paths.push(path.display().to_string());
+
+        match Command::new(&path).args(args).output() {
+            Ok(output) => return Ok(output),
             Err(_) => continue,
         }
     }
-    
-    let output = result.ok_or("Failed to find converter executable")?;
-    
+
+    Err(format!(
+        "Failed to find converter executable. Tried: {}",
+        attempted_paths.join(", ")
+    ))
+}
+
+#[tauri::command]
+async fn convert_files(
+    input_paths: Vec<String>,
+    output_dir: String,
+    format: String,
+) -> Result<ConversionResult, String> {
+    let output = run_converter(&[
+        "convert",
+        "--in",
+        &input_paths.join(","),
+        "--out",
+        &output_dir,
+        "--to",
+        &format,
+    ])?;
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
-    
+
     // Sjekk om output inneholder feilmeldinger
-    let has_errors = stdout.contains("⚠️") || stdout.contains("feilet") || stdout.contains("failed") || 
-                    stderr.contains("error") || stderr.contains("Error");
-    
+    let has_errors = stdout.contains("⚠️")
+        || stdout.contains("feilet")
+        || stdout.contains("failed")
+        || stderr.contains("error")
+        || stderr.contains("Error");
+
     if output.status.success() && !has_errors {
         Ok(ConversionResult {
             success: true,
@@ -75,7 +121,10 @@ async fn convert_files(input_paths: Vec<String>, output_dir: String, format: Str
     } else {
         Ok(ConversionResult {
             success: false,
-            message: format!("❌ Conversion failed:\n\nCLI Output: {}\n\nError Output: {}", stdout, stderr),
+            message: format!(
+                "❌ Conversion failed:\n\nCLI Output: {}\n\nError Output: {}",
+                stdout, stderr
+            ),
             jobs: vec![],
         })
     }
@@ -84,71 +133,38 @@ async fn convert_files(input_paths: Vec<String>, output_dir: String, format: Str
 #[tauri::command]
 async fn check_dependencies() -> Result<serde_json::Value, String> {
     let mut results = serde_json::Map::new();
-    
-    // Try to find converter in common locations
-    let converter_paths = vec![
-        "converter",
-        "C:\\Users\\vetle\\AppData\\Roaming\\npm\\converter.cmd",
-        "C:\\Users\\vetle\\AppData\\Roaming\\npm\\converter",
-        "C:\\Program Files\\nodejs\\converter.cmd",
-        "C:\\Program Files\\nodejs\\converter"
-    ];
-    
+
     // Check Pandoc using CLI
-    let mut pandoc_ok = false;
-    for path in &converter_paths {
-        match Command::new(path).args(&["check-pandoc"]).output() {
-            Ok(output) => {
-                if output.status.success() {
-                    pandoc_ok = true;
-                    break;
-                }
-            }
-            Err(_) => continue,
-        }
-    }
+    let pandoc_ok = run_converter(&["check-pandoc"])
+        .map(|output| output.status.success())
+        .unwrap_or(false);
     results.insert("pandoc".to_string(), serde_json::Value::Bool(pandoc_ok));
-    
+
     // Check LibreOffice
     let libreoffice_result = Command::new("libreoffice").arg("--version").output();
-    results.insert("libreoffice".to_string(), serde_json::Value::Bool(libreoffice_result.is_ok()));
-    
+    results.insert(
+        "libreoffice".to_string(),
+        serde_json::Value::Bool(libreoffice_result.is_ok()),
+    );
+
     // Check Ghostscript using CLI
-    let mut gs_ok = false;
-    for path in &converter_paths {
-        match Command::new(path).args(&["check-pdf-tools"]).output() {
-            Ok(output) => {
-                if output.status.success() {
-                    let output_str = String::from_utf8_lossy(&output.stdout);
-                    if output_str.contains("✅ Ghostscript funnet") {
-                        gs_ok = true;
-                        break;
-                    }
-                }
-            }
-            Err(_) => continue,
-        }
-    }
+    let gs_ok = run_converter(&["check-pdf-tools"])
+        .map(|output| {
+            output.status.success()
+                && String::from_utf8_lossy(&output.stdout).contains("✅ Ghostscript funnet")
+        })
+        .unwrap_or(false);
     results.insert("ghostscript".to_string(), serde_json::Value::Bool(gs_ok));
-    
+
     // Check qpdf using CLI
-    let mut qpdf_ok = false;
-    for path in &converter_paths {
-        match Command::new(path).args(&["check-pdf-tools"]).output() {
-            Ok(output) => {
-                if output.status.success() {
-                    let output_str = String::from_utf8_lossy(&output.stdout);
-                    if output_str.contains("✅ qpdf funnet") {
-                        qpdf_ok = true;
-                        break;
-                    }
-                }
-            }
-            Err(_) => continue,
-        }
-    }
+    let qpdf_ok = run_converter(&["check-pdf-tools"])
+        .map(|output| {
+            output.status.success()
+                && String::from_utf8_lossy(&output.stdout).contains("✅ qpdf funnet")
+        })
+        .unwrap_or(false);
     results.insert("qpdf".to_string(), serde_json::Value::Bool(qpdf_ok));
-    
+
     Ok(serde_json::Value::Object(results))
 }
 
@@ -159,17 +175,17 @@ async fn open_folder(path: String) -> Result<(), String> {
     {
         let _ = Command::new("explorer").arg(&path).spawn();
     }
-    
+
     #[cfg(target_os = "macos")]
     {
         let _ = Command::new("open").arg(&path).spawn();
     }
-    
+
     #[cfg(target_os = "linux")]
     {
         let _ = Command::new("xdg-open").arg(&path).spawn();
     }
-    
+
     Ok(())
 }
 
@@ -182,40 +198,30 @@ async fn select_files() -> Result<Vec<String>, String> {
 
 #[tauri::command]
 async fn get_supported_formats() -> Result<serde_json::Value, String> {
-    // Try to find converter in common locations
-    let converter_paths = vec![
-        "converter",
-        "C:\\Users\\vetle\\AppData\\Roaming\\npm\\converter.cmd",
-        "C:\\Users\\vetle\\AppData\\Roaming\\npm\\converter",
-        "C:\\Program Files\\nodejs\\converter.cmd",
-        "C:\\Program Files\\nodejs\\converter"
-    ];
-    
-    let mut result = None;
-    for path in converter_paths {
-        match Command::new(path).args(&["formats"]).output() {
-            Ok(output) => {
-                result = Some(output);
-                break;
-            }
-            Err(_) => continue,
-        }
-    }
-    
-    let output = result.ok_or("Failed to find converter executable")?;
-    
+    let output = run_converter(&["formats"])?;
+
     if output.status.success() {
         // Parse the output to extract formats
         let output_str = String::from_utf8_lossy(&output.stdout);
         let mut formats = serde_json::Map::new();
-        
+
         // Simple parsing - in real implementation, we'd parse this more carefully
-        if output_str.contains("png") { formats.insert("png".to_string(), serde_json::Value::Bool(true)); }
-        if output_str.contains("jpg") { formats.insert("jpg".to_string(), serde_json::Value::Bool(true)); }
-        if output_str.contains("pdf") { formats.insert("pdf".to_string(), serde_json::Value::Bool(true)); }
-        if output_str.contains("docx") { formats.insert("docx".to_string(), serde_json::Value::Bool(true)); }
-        if output_str.contains("heic") { formats.insert("heic".to_string(), serde_json::Value::Bool(true)); }
-        
+        if output_str.contains("png") {
+            formats.insert("png".to_string(), serde_json::Value::Bool(true));
+        }
+        if output_str.contains("jpg") {
+            formats.insert("jpg".to_string(), serde_json::Value::Bool(true));
+        }
+        if output_str.contains("pdf") {
+            formats.insert("pdf".to_string(), serde_json::Value::Bool(true));
+        }
+        if output_str.contains("docx") {
+            formats.insert("docx".to_string(), serde_json::Value::Bool(true));
+        }
+        if output_str.contains("heic") {
+            formats.insert("heic".to_string(), serde_json::Value::Bool(true));
+        }
+
         Ok(serde_json::Value::Object(formats))
     } else {
         Err("Failed to get supported formats".to_string())
@@ -226,7 +232,6 @@ async fn get_supported_formats() -> Result<serde_json::Value, String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-
         .invoke_handler(tauri::generate_handler![
             convert_files,
             check_dependencies,
