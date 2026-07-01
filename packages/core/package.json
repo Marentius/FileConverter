@@ -46,12 +46,13 @@
     "prepack": "npm run build && npm run test"
   },
   "dependencies": {
+    "@xmldom/xmldom": "^0.8.13",
     "chalk": "^5.6.2",
     "cli-progress": "^3.12.0",
     "commander": "^14.0.3",
-    "exceljs": "^4.4.0",
     "file-type": "^21.3.2",
     "js-yaml": "^4.1.0",
+    "jszip": "^3.10.1",
     "mammoth": "^1.12.0",
     "marked": "^17.0.4",
     "officeparser": "^3.2.2",
@@ -78,7 +79,7 @@
     "jest": "^30.3.0",
     "rimraf": "^6.1.3",
     "ts-jest": "^29.4.6",
-    "tsup": "^8.5.1",
+    "tsup": "^8.4.0",
     "typescript-eslint": "^8.57.0"
   },
   "keywords": [

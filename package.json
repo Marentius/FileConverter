@@ -11,7 +11,7 @@
     "build": "npm run build --workspaces",
     "dev": "npm run dev --workspaces",
     "test": "npm run test --workspaces",
-    "lint": "npm run lint --workspaces",
+    "lint": "npm run lint --workspaces --if-present",
     "clean": "npm run clean --workspaces",
     "gui:dev": "cd packages/gui && npm run tauri dev",
     "gui:build": "cd packages/gui && npm run tauri build",
@@ -19,12 +19,12 @@
     "core:dev": "cd packages/core && npm run dev"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
     "@eslint/js": "^10.0.1",
+    "@types/node": "^25.5.0",
     "eslint": "^10.0.3",
-    "typescript-eslint": "^8.57.0",
     "prettier": "^3.8.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.0"
   },
   "engines": {
     "node": ">=22.0.0"
