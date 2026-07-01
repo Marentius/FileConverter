@@ -1,5 +1,6 @@
 import mammoth from 'mammoth';
-import ExcelJS from 'exceljs';
+import JSZip from 'jszip';
+import { DOMParser } from '@xmldom/xmldom';
 import officeparser from 'officeparser';
 import fs from 'fs';
 import path from 'path';
@@ -19,7 +20,7 @@ import {
  * Converts DOCX, XLSX, PPTX, ODT, and RTF without external system programs.
  *
  * - mammoth: DOCX -> HTML (semantic, preserves headings/lists/tables/images)
- * - exceljs: XLSX -> HTML tables
+ * - JSZip + XML parsing: XLSX -> HTML tables
  * - officeparser: PPTX/ODT/RTF -> plain text extraction
  */
 export class OfficeAdapter extends BaseAdapter {
@@ -136,33 +137,124 @@ export class OfficeAdapter extends BaseAdapter {
   }
 
   /**
-   * Converts XLSX to an HTML table using exceljs.
+   * Converts XLSX to HTML tables by reading the XLSX ZIP/XML structure.
    * Renders each worksheet as a separate table with headers.
    */
   private async readXlsx(filePath: string): Promise<string> {
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.readFile(filePath);
-
+    const zip = await JSZip.loadAsync(fs.readFileSync(filePath));
+    const sharedStrings = await this.readSharedStrings(zip);
+    const sheets = await this.readWorkbookSheets(zip);
     const htmlParts: string[] = [];
 
-    workbook.eachSheet((worksheet) => {
-      htmlParts.push(`<h2>${this.escapeHtml(worksheet.name)}</h2>`);
+    for (const sheet of sheets) {
+      const sheetFile = zip.file(sheet.path);
+      if (!sheetFile) {
+        logger.debug('XLSX worksheet file missing', { sheet: sheet.name, path: sheet.path });
+        continue;
+      }
+
+      htmlParts.push(`<h2>${this.escapeHtml(sheet.name)}</h2>`);
       htmlParts.push('<table border="1" cellpadding="4" cellspacing="0">');
 
-      worksheet.eachRow((row, rowNumber) => {
+      const worksheetXml = await sheetFile.async('text');
+      const worksheet = this.parseXml(worksheetXml);
+      const rows = this.getElementsByLocalName(worksheet, 'row');
+
+      for (const row of rows) {
+        const rowNumber = Number(row.getAttribute('r')) || htmlParts.length;
         const tag = rowNumber === 1 ? 'th' : 'td';
         htmlParts.push('<tr>');
-        row.eachCell({ includeEmpty: true }, (cell) => {
-          const value = cell.value !== null && cell.value !== undefined ? String(cell.value) : '';
+
+        const cells = this.getElementsByLocalName(row, 'c');
+        for (const cell of cells) {
+          const value = this.readCellValue(cell, sharedStrings);
           htmlParts.push(`<${tag}>${this.escapeHtml(value)}</${tag}>`);
-        });
+        }
+
         htmlParts.push('</tr>');
-      });
+      }
 
       htmlParts.push('</table>');
-    });
+    }
 
     return htmlParts.join('\n');
+  }
+
+  private async readSharedStrings(zip: JSZip): Promise<string[]> {
+    const sharedStringsFile = zip.file('xl/sharedStrings.xml');
+    if (!sharedStringsFile) {
+      return [];
+    }
+
+    const sharedStringsXml = await sharedStringsFile.async('text');
+    const sharedStrings = this.parseXml(sharedStringsXml);
+    return this.getElementsByLocalName(sharedStrings, 'si').map((item) =>
+      this.getElementsByLocalName(item, 't')
+        .map((textNode) => textNode.textContent || '')
+        .join('')
+    );
+  }
+
+  private async readWorkbookSheets(zip: JSZip): Promise<Array<{ name: string; path: string }>> {
+    const workbookFile = zip.file('xl/workbook.xml');
+    const relationshipsFile = zip.file('xl/_rels/workbook.xml.rels');
+
+    if (!workbookFile || !relationshipsFile) {
+      throw new Error('Invalid XLSX file: missing workbook metadata');
+    }
+
+    const workbook = this.parseXml(await workbookFile.async('text'));
+    const relationships = this.parseXml(await relationshipsFile.async('text'));
+    const relationshipTargets = new Map<string, string>();
+
+    for (const relationship of this.getElementsByLocalName(relationships, 'Relationship')) {
+      const id = relationship.getAttribute('Id');
+      const target = relationship.getAttribute('Target');
+      if (id && target) {
+        relationshipTargets.set(id, this.normalizeXlsxPath(target));
+      }
+    }
+
+    return this.getElementsByLocalName(workbook, 'sheet').map((sheet, index) => {
+      const relationshipId = sheet.getAttribute('r:id') || sheet.getAttribute('id') || '';
+      const path = relationshipTargets.get(relationshipId) || `xl/worksheets/sheet${index + 1}.xml`;
+      return {
+        name: sheet.getAttribute('name') || `Sheet ${index + 1}`,
+        path,
+      };
+    });
+  }
+
+  private readCellValue(cell: Element, sharedStrings: string[]): string {
+    const type = cell.getAttribute('t');
+
+    if (type === 'inlineStr') {
+      return this.getElementsByLocalName(cell, 't')
+        .map((textNode) => textNode.textContent || '')
+        .join('');
+    }
+
+    const value = this.getElementsByLocalName(cell, 'v')[0]?.textContent || '';
+    if (type === 's') {
+      return sharedStrings[Number(value)] || '';
+    }
+
+    return value;
+  }
+
+  private normalizeXlsxPath(target: string): string {
+    const normalized = target.replace(/\\/g, '/').replace(/^\//, '');
+    return normalized.startsWith('xl/') ? normalized : `xl/${normalized}`;
+  }
+
+  private parseXml(xml: string): Document {
+    return new DOMParser().parseFromString(xml, 'application/xml');
+  }
+
+  private getElementsByLocalName(root: Document | Element, localName: string): Element[] {
+    return Array.from(root.getElementsByTagName('*')).filter(
+      (element) => element.localName === localName || element.tagName === localName
+    );
   }
 
   /**

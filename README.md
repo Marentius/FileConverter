@@ -185,7 +185,7 @@ FileConverter/
 │   │   │   ├── adapters/
 │   │   │   │   ├── images/    # Sharp
 │   │   │   │   ├── document/  # marked + pdfkit + turndown
-│   │   │   │   ├── office/    # mammoth + exceljs + officeparser
+│   │   │   │   ├── office/    # mammoth + JSZip/XML + officeparser
 │   │   │   │   ├── pdf/       # pdf-lib
 │   │   │   │   └── ocr/       # tesseract.js
 │   │   │   ├── presets/       # Image presets
@@ -205,7 +205,7 @@ The `AdapterManager` selects the right adapter based on input/output format. Eac
 |---------|---------|---------|
 | `SharpAdapter` | sharp | Image format conversion, resize, quality |
 | `DocumentAdapter` | marked, pdfkit, turndown | MD/HTML/TXT conversions |
-| `OfficeAdapter` | mammoth, exceljs, officeparser | DOCX/XLSX/PPTX/ODT/RTF conversions |
+| `OfficeAdapter` | mammoth, JSZip/XML, officeparser | DOCX/XLSX/PPTX/ODT/RTF conversions |
 | `PdfAdapter` | pdf-lib | PDF merge, split, optimize |
 | `OcrAdapter` | tesseract.js | Image-to-text extraction |
 
@@ -248,7 +248,7 @@ npx jest path/to/test.spec.ts
 | CLI framework | Commander.js |
 | Image processing | Sharp |
 | Word documents | mammoth (DOCX to HTML) |
-| Spreadsheets | ExcelJS (XLSX to HTML tables) |
+| Spreadsheets | JSZip + XML parsing (XLSX to HTML tables) |
 | Presentations/ODT | officeparser (text extraction) |
 | PDF manipulation | pdf-lib |
 | PDF generation | PDFKit |
