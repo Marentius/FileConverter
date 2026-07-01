@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.3.4...fileconverter-v1.4.0) (2026-07-01)
+
+
+### Features
+
+* **core:** add SVG image input support ([2f468df](https://github.com/Marentius/FileConverter/commit/2f468df708319fa80585dad2a5739ecb9fac9e7d))
+
+
+### Bug Fixes
+
+* **core:** replace vulnerable xlsx dependency chain ([3a456fa](https://github.com/Marentius/FileConverter/commit/3a456fa5e39b971f0a831c498ea392c8e3377f20))
+
 ## [1.3.4](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.3.3...fileconverter-v1.3.4) (2026-06-01)
 
 
