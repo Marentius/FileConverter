@@ -13,6 +13,7 @@ const SUPPORTED_FORMATS = {
   'image/tiff': { ext: 'tiff', supported: true },
   'image/bmp': { ext: 'bmp', supported: true },
   'image/gif': { ext: 'gif', supported: true },
+  'image/svg+xml': { ext: 'svg', supported: true },
   
   // Document formats
   'application/pdf': { ext: 'pdf', supported: true },
@@ -39,6 +40,7 @@ const EXTENSION_TO_MIME: Record<string, string> = {
   'tif': 'image/tiff',
   'bmp': 'image/bmp',
   'gif': 'image/gif',
+  'svg': 'image/svg+xml',
   'pdf': 'application/pdf',
   'md': 'text/markdown',
   'html': 'text/html',
