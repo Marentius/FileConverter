@@ -26,6 +26,8 @@ export interface ConversionOptions {
   pages?: string;
   // OCR-operasjoner
   language?: string;
+  logFileJson?: string;
+  logFileTxt?: string;
 }
 
 export interface ConversionJob {
@@ -62,6 +64,11 @@ export interface JobLog {
   exitCode: number;
   success: boolean;
   error?: string;
+}
+
+export interface JobLogReportOptions {
+  jsonPath?: string;
+  textPath?: string;
 }
 
 export interface FileTypeInfo {

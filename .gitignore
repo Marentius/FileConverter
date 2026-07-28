@@ -101,3 +101,5 @@ tmp/
 temp/
 CLAUDE.md
 test-temp
+# Internal agent workflow artifacts
+docs/superpowers/

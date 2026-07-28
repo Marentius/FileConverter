@@ -51,6 +51,19 @@ describe('E2E Smoke Tests', () => {
       const content = fs.readFileSync(outputFile, 'utf-8');
       expect(content).toContain('Smoke Test');
     }, 60000);
+
+    it('should write requested JSON and text job reports', () => {
+      createTestFile('report-test.md', '# Report Test');
+
+      runCLI([
+        'convert', '--in', 'report-test.md', '--out', 'output', '--to', 'html',
+        '--log-file-json', 'output/job-logs.json',
+        '--log-file-txt', 'output/job-logs.txt',
+      ]);
+
+      expect(fs.existsSync(path.join(outputDir, 'job-logs.json'))).toBe(true);
+      expect(fs.existsSync(path.join(outputDir, 'job-logs.txt'))).toBe(true);
+    }, 60000);
   });
 
   describe('Representative Job 2: Batch Conversion', () => {

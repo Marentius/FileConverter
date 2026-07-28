@@ -1,13 +1,14 @@
 import path from 'path';
 import fs from 'fs';
 import { scanForFiles } from './file-scanner';
-import { ConversionPlan, ConversionOptions, ConversionResult } from './types';
+import { ConversionPlan, ConversionOptions, ConversionResult, JobLogReportOptions } from './types';
 import { JobQueue } from './job-queue';
 import { ProgressTracker } from './progress';
 import { ConversionParameters } from './adapters/base-adapter';
 import { ConfigManager } from './config/config-manager';
 import { validatePath } from './path-security';
 import logger from './logger';
+import { writeJobLogReports } from './job-log-writer';
 import chalk from 'chalk';
 
 export class Converter {
@@ -27,7 +28,9 @@ export class Converter {
       preset,
       operation,
       inputFiles,
-      pages
+      pages,
+      logFileJson,
+      logFileTxt
     } = options;
     
     logger.info('Starting file conversion', { 
@@ -114,7 +117,10 @@ export class Converter {
       }
 
       // Start job queue and progress tracking
-      return await this.processJobs(supportedPlans, concurrency, retries, finalParameters);
+      return await this.processJobs(supportedPlans, concurrency, retries, finalParameters, {
+        jsonPath: logFileJson,
+        textPath: logFileTxt,
+      });
       
     } catch (error) {
       logger.error('Error during conversion', { error });
@@ -126,7 +132,8 @@ export class Converter {
     plans: ConversionPlan[], 
     concurrency: number, 
     retries: number,
-    parameters: ConversionParameters
+    parameters: ConversionParameters,
+    reportOptions: JobLogReportOptions
   ): Promise<ConversionResult> {
     const jobQueue = new JobQueue(concurrency);
     const progressTracker = new ProgressTracker();
@@ -155,12 +162,16 @@ export class Converter {
     // Vent på at alle jobber er ferdig
     const result = await jobQueue.waitForCompletion();
     
+    const jobLogs = jobQueue.getJobLogs();
+
     // Stopp progress tracking og vis sammendrag
     progressTracker.stop();
     progressTracker.displaySummary(result);
-    
+
+    await writeJobLogReports(reportOptions, result, jobLogs);
+
     // Logg jobb-resultater
-    this.logJobResults(jobQueue.getJobLogs());
+    this.logJobResults(jobLogs);
     
     return result;
   }
@@ -168,7 +179,6 @@ export class Converter {
   private logJobResults(jobLogs: any[]): void {
     logger.info(`Conversion finished. ${jobLogs.length} jobs logged.`);
     
-    // TODO: Lagre jobb-logger til fil i neste bolk
     for (const log of jobLogs) {
       logger.debug('Job log', log);
     }

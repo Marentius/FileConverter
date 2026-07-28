@@ -164,4 +164,22 @@ describe('Converter Integration Tests', () => {
       expect(outputFiles.length).toBe(0);
     });
   });
+  describe('Job Log Reports', () => {
+    it('writes requested JSON and text reports after a completed conversion', async () => {
+      const jsonPath = path.join(testOutputDir, 'reports', 'jobs.json');
+      const textPath = path.join(testOutputDir, 'reports', 'jobs.txt');
+      createTestFiles();
+
+      await converter.convert({
+        input: testInputDir,
+        output: testOutputDir,
+        format: 'html',
+        logFileJson: jsonPath,
+        logFileTxt: textPath,
+      });
+
+      expect(fs.existsSync(jsonPath)).toBe(true);
+      expect(fs.existsSync(textPath)).toBe(true);
+    }, 60000);
+  });
 });

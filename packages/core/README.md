@@ -73,6 +73,8 @@ converter convert -i <input> -o <output> --to <format> [options]
 | `--dry-run` | Preview without converting |
 | `--concurrency <n>` | Parallel jobs (default: 1) |
 | `--retries <n>` | Retry attempts per job (default: 2) |
+| `--log-file-json <path>` | Save conversion job logs as JSON |
+| `--log-file-txt <path>` | Save conversion job logs as readable text |
 | `--quality <1-100>` | Image quality |
 | `--max-width <px>` | Maximum image width |
 | `--max-height <px>` | Maximum image height |
