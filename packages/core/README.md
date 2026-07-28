@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@fileconverter/core.svg)](https://www.npmjs.com/package/@fileconverter/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A fast, zero-config file conversion CLI. Images, documents, office files, PDFs, and OCR â€” all powered by pure npm packages with **no external system dependencies**.
+A fast, zero-config file conversion CLI. Images, documents, office files, PDFs, and OCR — all powered by pure npm packages with **no external system dependencies**.
 
 ## Install
 
@@ -58,7 +58,7 @@ converter ocr -i scan.png -o result.txt --lang eng
 
 ## Commands
 
-### `convert` â€” File conversion
+### `convert` — File conversion
 
 ```bash
 converter convert -i <input> -o <output> --to <format> [options]
@@ -81,7 +81,7 @@ converter convert -i <input> -o <output> --to <format> [options]
 | `--strip-metadata` | Remove image metadata |
 | `--preset <name>` | Use a preset (e.g. `image/web`) |
 
-### `pdf` â€” PDF operations
+### `pdf` — PDF operations
 
 ```bash
 converter pdf --compress <file> -o <output>
@@ -89,7 +89,7 @@ converter pdf --merge <files...> -o <output>
 converter pdf --split <file> --pages <range> -o <output>
 ```
 
-### `ocr` â€” Text extraction
+### `ocr` — Text extraction
 
 ```bash
 converter ocr -i <image> -o <output.txt> [--lang <language>]
@@ -103,7 +103,7 @@ converter ocr -i <image> -o <output.txt> [--lang <language>]
 | `image/print` | 95 | 3000x3000 | No |
 | `image/thumbnail` | 80 | 300x300 | Yes |
 | `image/social` | 90 | 1200x1200 | Yes |
-| `image/original` | 100 | â€” | No |
+| `image/original` | 100 | — | No |
 
 ## Requirements
 
@@ -112,4 +112,4 @@ converter ocr -i <image> -o <output.txt> [--lang <language>]
 
 ## License
 
-MIT â€” see [LICENSE](https://github.com/Marentius/FileConverter/blob/main/LICENSE)
+MIT — see [LICENSE](https://github.com/Marentius/FileConverter/blob/main/LICENSE)

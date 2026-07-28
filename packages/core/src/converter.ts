@@ -154,12 +154,12 @@ export class Converter {
       progressTracker.updateJobStatus(job);
     });
     
-    // Legg til alle jobber i kÃ¸en
+    // Legg til alle jobber i køen
     for (const plan of plans) {
       await jobQueue.addJob(plan, retries, parameters);
     }
     
-    // Vent pÃ¥ at alle jobber er ferdig
+    // Vent på at alle jobber er ferdig
     const result = await jobQueue.waitForCompletion();
     
     const jobLogs = jobQueue.getJobLogs();
@@ -196,7 +196,7 @@ export class Converter {
     console.log(`Unsupported conversions: ${chalk.red.bold(unsupportedPlans.length)}`);
     
     if (dryRun) {
-      console.log(chalk.yellow('ðŸ” DRY-RUN MODE - No files will be changed'));
+      console.log(chalk.yellow('🔍 DRY-RUN MODE - No files will be changed'));
     }
     
     console.log('');
@@ -206,14 +206,14 @@ export class Converter {
     console.log(chalk.bold.cyan('=== DETAILED CONVERSION PLAN ==='));
     
     plans.forEach((plan, index) => {
-      const status = plan.supported ? chalk.green('âœ“') : chalk.red('âœ—');
+      const status = plan.supported ? chalk.green('✓') : chalk.red('✗');
       const inputName = path.basename(plan.inputPath);
       const outputName = path.basename(plan.outputPath);
       
-      console.log(`${index + 1}. ${status} ${chalk.bold(inputName)} â†’ ${chalk.bold(outputName)}`);
+      console.log(`${index + 1}. ${status} ${chalk.bold(inputName)} → ${chalk.bold(outputName)}`);
       console.log(`   From: ${chalk.gray(plan.inputPath)}`);
       console.log(`   To:  ${chalk.gray(plan.outputPath)}`);
-      console.log(`   Format: ${chalk.blue(plan.inputFormat)} â†’ ${chalk.blue(plan.outputFormat)}`);
+      console.log(`   Format: ${chalk.blue(plan.inputFormat)} → ${chalk.blue(plan.outputFormat)}`);
       
       if (!plan.supported && plan.reason) {
         console.log(`   ${chalk.red('Reason:')} ${plan.reason}`);

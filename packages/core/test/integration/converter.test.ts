@@ -136,7 +136,7 @@ describe('Converter Integration Tests', () => {
         try {
           fs.rmSync(dryRunOutputDir, { recursive: true, force: true });
         } catch (error) {
-          // Ignorer feil hvis filer er lÃ¥st
+          // Ignorer feil hvis filer er låst
           console.warn('Kunne ikke rydde opp dry-run output-mappe:', error);
         }
       }
@@ -154,7 +154,7 @@ describe('Converter Integration Tests', () => {
         retries: 2
       });
 
-      // I dry run mode skal vi fÃ¥ resultat uten Ã¥ kjÃ¸re faktiske jobber
+      // I dry run mode skal vi få resultat uten å kjøre faktiske jobber
       expect(result.totalJobs).toBeGreaterThan(0);
       expect(result.successfulJobs).toBeGreaterThan(0);
       expect(result.totalDuration).toBe(0);

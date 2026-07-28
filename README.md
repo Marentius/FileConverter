@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js CI](https://github.com/Marentius/FileConverter/actions/workflows/ci.yml/badge.svg)](https://github.com/Marentius/FileConverter/actions/workflows/ci.yml)
 
-A fast, zero-config file conversion CLI. Images, office documents, PDFs, and OCR â€” all powered by npm packages with **no external system dependencies**.
+A fast, zero-config file conversion CLI. Images, office documents, PDFs, and OCR — all powered by npm packages with **no external system dependencies**.
 
 ## Quick Start
 
@@ -26,7 +26,7 @@ cd FileConverter
 npm run setup
 ```
 
-No need to install LibreOffice, Pandoc, Ghostscript, or Tesseract â€” everything runs on pure npm packages.
+No need to install LibreOffice, Pandoc, Ghostscript, or Tesseract — everything runs on pure npm packages.
 
 ```bash
 # Convert an image
@@ -60,7 +60,7 @@ converter ocr -i scan.png -o result.txt
 
 ## CLI Reference
 
-### `convert` â€” File conversion
+### `convert` — File conversion
 
 ```bash
 converter convert -i <input> -o <output> --to <format> [options]
@@ -83,7 +83,7 @@ converter convert -i <input> -o <output> --to <format> [options]
 | `--strip-metadata` | Remove image metadata |
 | `--preset <name>` | Use a preset (see below) |
 
-### `pdf` â€” PDF operations
+### `pdf` — PDF operations
 
 ```bash
 converter pdf --compress <file> -o <output>
@@ -99,7 +99,7 @@ converter pdf --split <file> --pages <range> -o <output>
 | `--pages <range>` | Page ranges, e.g. `1-3,5,7-9` |
 | `-o, --out <file>` | Output file |
 
-### `ocr` â€” Text extraction
+### `ocr` — Text extraction
 
 ```bash
 converter ocr -i <image> -o <output.txt> [--lang <language>]
@@ -132,7 +132,7 @@ Built-in image presets:
 | `image/print` | 95 | 3000x3000 | No |
 | `image/thumbnail` | 80 | 300x300 | Yes |
 | `image/social` | 90 | 1200x1200 | Yes |
-| `image/original` | 100 | â€” | No |
+| `image/original` | 100 | — | No |
 
 ```bash
 # Use a preset
@@ -177,29 +177,29 @@ converter convert -i archive/ -o output/ --to jpg --dry-run
 
 ```
 FileConverter/
-â”œâ”€â”€ packages/
-â”‚   â”œâ”€â”€ core/                  # CLI + conversion engine
-â”‚   â”‚   â”œâ”€â”€ src/
-â”‚   â”‚   â”‚   â”œâ”€â”€ cli.ts         # CLI entry point (Commander.js)
-â”‚   â”‚   â”‚   â”œâ”€â”€ converter.ts   # Orchestration layer
-â”‚   â”‚   â”‚   â”œâ”€â”€ file-scanner.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ job-queue.ts   # Parallel execution (p-queue)
-â”‚   â”‚   â”‚   â”œâ”€â”€ adapters/
-â”‚   â”‚   â”‚   â”‚   â”œâ”€â”€ images/    # Sharp
-â”‚   â”‚   â”‚   â”‚   â”œâ”€â”€ document/  # marked + pdfkit + turndown
-â”‚   â”‚   â”‚   â”‚   â”œâ”€â”€ office/    # mammoth + JSZip/XML + officeparser
-â”‚   â”‚   â”‚   â”‚   â”œâ”€â”€ pdf/       # pdf-lib
-â”‚   â”‚   â”‚   â”‚   â””â”€â”€ ocr/       # tesseract.js
-â”‚   â”‚   â”‚   â”œâ”€â”€ presets/       # Image presets
-â”‚   â”‚   â”‚   â””â”€â”€ config/        # Preset management
-â”‚   â”‚   â””â”€â”€ test/
-â”‚   â””â”€â”€ gui/                   # Tauri + React desktop app (WIP)
-â””â”€â”€ package.json               # Workspace root
+├── packages/
+│   ├── core/                  # CLI + conversion engine
+│   │   ├── src/
+│   │   │   ├── cli.ts         # CLI entry point (Commander.js)
+│   │   │   ├── converter.ts   # Orchestration layer
+│   │   │   ├── file-scanner.ts
+│   │   │   ├── job-queue.ts   # Parallel execution (p-queue)
+│   │   │   ├── adapters/
+│   │   │   │   ├── images/    # Sharp
+│   │   │   │   ├── document/  # marked + pdfkit + turndown
+│   │   │   │   ├── office/    # mammoth + JSZip/XML + officeparser
+│   │   │   │   ├── pdf/       # pdf-lib
+│   │   │   │   └── ocr/       # tesseract.js
+│   │   │   ├── presets/       # Image presets
+│   │   │   └── config/        # Preset management
+│   │   └── test/
+│   └── gui/                   # Tauri + React desktop app (WIP)
+└── package.json               # Workspace root
 ```
 
 ### Adapter pattern
 
-All conversions flow through adapters: `CLI â†’ Converter â†’ FileScanner â†’ JobQueue â†’ Adapter`
+All conversions flow through adapters: `CLI → Converter → FileScanner → JobQueue → Adapter`
 
 The `AdapterManager` selects the right adapter based on input/output format. Each adapter extends `BaseAdapter` and implements a `convert()` method. Currently registered adapters:
 
