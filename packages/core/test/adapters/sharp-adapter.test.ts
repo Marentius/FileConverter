@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import { SharpAdapter } from '../../src/adapters/images/sharp-adapter';
 import { cleanupTestFiles, getTestFilePath } from '../setup';
 import sharp from 'sharp';

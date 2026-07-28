@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import { Converter } from '../../src/converter';
 import { createTestFile, cleanupTestFiles, getTestFilePath } from '../setup';
 import path from 'path';

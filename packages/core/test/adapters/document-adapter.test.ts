@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import { DocumentAdapter } from '../../src/adapters/document/document-adapter';
 import { createTestFile, cleanupTestFiles, getTestFilePath } from '../setup';
 import fs from 'fs';

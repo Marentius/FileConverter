@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals';
 import { OfficeAdapter } from '../../src/adapters/office/office-adapter';
 import { getTestFilePath } from '../setup';
 import fs from 'fs';

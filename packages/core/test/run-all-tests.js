@@ -22,8 +22,8 @@ function runTest(type, command) {
     const duration = (endTime - startTime) / 1000;
     
     // Parse test results
-    const passedMatch = output.match(/(\d+) passing/);
-    const failedMatch = output.match(/(\d+) failing/);
+    const passedMatch = output.match(/Tests\s+(\d+)\s+passed/) || output.match(/(\d+) passing/);
+    const failedMatch = output.match(/Tests\s+\d+\s+passed.*?(\d+)\s+failed/s) || output.match(/(\d+) failing/);
     
     testResults[type] = {
       passed: passedMatch ? parseInt(passedMatch[1]) : 0,
