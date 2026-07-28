@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.2](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.4.1...fileconverter-v1.4.2) (2026-07-28)
+
+
+### Bug Fixes
+
+* remove obsolete gui dependency checks ([#60](https://github.com/Marentius/FileConverter/issues/60)) ([88f7d67](https://github.com/Marentius/FileConverter/commit/88f7d6771c946646a60cba7ada82e1c771943e38))
+* update vulnerable serde_with ([#63](https://github.com/Marentius/FileConverter/issues/63)) ([e15c0c6](https://github.com/Marentius/FileConverter/commit/e15c0c67671346d2f089f542205380a98d30adb2))
+
 ## [1.4.1](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.4.0...fileconverter-v1.4.1) (2026-07-28)
 
 
