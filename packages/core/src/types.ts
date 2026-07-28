@@ -64,6 +64,11 @@ export interface JobLog {
   error?: string;
 }
 
+export interface JobLogReportOptions {
+  jsonPath?: string;
+  textPath?: string;
+}
+
 export interface FileTypeInfo {
   ext: string;
   mime: string;
