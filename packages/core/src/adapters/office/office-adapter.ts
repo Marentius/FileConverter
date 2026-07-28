@@ -59,7 +59,7 @@ export class OfficeAdapter extends BaseAdapter {
 
       if (outputFmt === 'pdf') {
         logger.warn(
-          'PDF output uses basic text rendering. Formatting, images, and tables will not be preserved. For best results, convert to HTML instead.'
+          'PDF output preserves basic headings, paragraphs, lists, tables, and embedded images. Complex layouts and CSS are not preserved.'
         );
       }
 
@@ -125,7 +125,13 @@ export class OfficeAdapter extends BaseAdapter {
    * Preserves headings, lists, tables, bold/italic, and images.
    */
   private async readDocx(filePath: string): Promise<string> {
-    const result = await mammoth.convertToHtml({ path: filePath });
+    const result = await mammoth.convertToHtml({ path: filePath }, {
+      convertImage: mammoth.images.imgElement((image) =>
+        image.readAsBase64String().then((base64) => ({
+          src: `data:${image.contentType};base64,${base64}`,
+        }))
+      ),
+    });
 
     if (result.messages.length > 0) {
       logger.debug('Mammoth conversion messages', {

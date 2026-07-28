@@ -7,6 +7,7 @@ import logger from '../../logger';
 import {
   stripHtml,
   stripMarkdown,
+  renderHtmlToPdf,
   renderTextToPdf,
   wrapInHtmlDocument,
   htmlToMarkdown,
@@ -57,7 +58,7 @@ export class DocumentAdapter extends BaseAdapter {
 
       if (outputFmt === 'pdf') {
         logger.warn(
-          'PDF output uses basic text rendering. Formatting, images, and tables will not be preserved. For best results, convert to HTML instead.'
+          'PDF output preserves basic headings, paragraphs, lists, tables, and embedded images. Complex layouts and CSS are not preserved.'
         );
         await this.convertToPdf(inputContent, inputFmt, plan.outputPath);
       } else if (outputFmt === 'html' || outputFmt === 'htm') {
@@ -102,14 +103,12 @@ export class DocumentAdapter extends BaseAdapter {
   }
 
   private convertToPdf(content: string, inputFormat: string, outputPath: string): Promise<void> {
-    let textContent = content;
     if (inputFormat === 'md' || inputFormat === 'markdown') {
-      textContent = stripMarkdown(content);
-    } else if (inputFormat === 'html' || inputFormat === 'htm') {
-      textContent = stripHtml(content);
+      return renderHtmlToPdf(marked.parse(content, { async: false }) as string, outputPath);
     }
+    if (inputFormat === 'html' || inputFormat === 'htm') return renderHtmlToPdf(content, outputPath);
 
-    return renderTextToPdf(textContent, outputPath);
+    return renderTextToPdf(content, outputPath);
   }
 
   private convertToHtml(content: string, inputFormat: string, outputPath: string): void {

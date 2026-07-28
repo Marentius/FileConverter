@@ -1,4 +1,7 @@
-import { stripHtml } from '../src/adapters/document/html-renderers';
+import fs from 'fs';
+import sharp from 'sharp';
+import { getTestFilePath } from './setup';
+import { renderHtmlToPdf, stripHtml } from '../src/adapters/document/html-renderers';
 
 describe('stripHtml', () => {
   it('removes basic HTML tags', () => {
@@ -50,5 +53,19 @@ describe('stripHtml', () => {
     const result = stripHtml('<style>body{color:red}</style>text');
     expect(result).not.toContain('<style');
     expect(result).toBe('text');
+  });
+  it('renders semantic structure and embedded images instead of a text-only PDF', async () => {
+    const outputPath = getTestFilePath('structured-html-output.pdf');
+    const image = (await sharp({ create: { width: 20, height: 20, channels: 3, background: '#0a84ff' } }).png().toBuffer()).toString('base64');
+
+    await renderHtmlToPdf(
+      `<h1>Structured Heading</h1><p><strong>Bold</strong> and <em>italic</em> text.</p><ul><li>First item</li><li>Second item</li></ul><table><tr><th>Key</th><th>Value</th></tr><tr><td>Table</td><td>Value</td></tr></table><img src="data:image/png;base64,${image}">`,
+      outputPath
+    );
+
+    const pdf = fs.readFileSync(outputPath);
+    expect(pdf.subarray(0, 4).toString()).toBe('%PDF');
+    expect(pdf.includes(Buffer.from('/Subtype /Image'))).toBe(true);
+    expect(pdf.length).toBeGreaterThan(2_000);
   });
 });
