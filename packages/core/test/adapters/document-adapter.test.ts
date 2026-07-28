@@ -120,6 +120,94 @@ describe('DocumentAdapter', () => {
       expect(content).toContain('Paragraph text');
     });
 
+    it('should convert HTML to PDF', async () => {
+      const htmlInput = createTestFile('doc-test-pdf.html', '<h1>HTML Title</h1><p>PDF body text</p>');
+      const pdfOutput = getTestFilePath('doc-test-html-output.pdf');
+      const plan = {
+        inputPath: htmlInput,
+        outputPath: pdfOutput,
+        inputFormat: 'html',
+        outputFormat: 'pdf',
+        supported: true,
+      };
+
+      const result = await adapter.convert(plan, {});
+
+      expect(result.success).toBe(true);
+      expect(fs.readFileSync(pdfOutput).subarray(0, 4).toString()).toBe('%PDF');
+    });
+
+    it('should convert plain text to PDF', async () => {
+      const textInput = createTestFile('doc-test-pdf.txt', 'Plain text PDF body');
+      const pdfOutput = getTestFilePath('doc-test-text-output.pdf');
+      const plan = {
+        inputPath: textInput,
+        outputPath: pdfOutput,
+        inputFormat: 'txt',
+        outputFormat: 'pdf',
+        supported: true,
+      };
+
+      const result = await adapter.convert(plan, {});
+
+      expect(result.success).toBe(true);
+      expect(fs.readFileSync(pdfOutput).subarray(0, 4).toString()).toBe('%PDF');
+    });
+
+    it('should escape plain text when converting to HTML', async () => {
+      const textInput = createTestFile('doc-test.txt', 'A < B & C');
+      const htmlOutput = getTestFilePath('doc-test-text-output.html');
+      const plan = {
+        inputPath: textInput,
+        outputPath: htmlOutput,
+        inputFormat: 'txt',
+        outputFormat: 'html',
+        supported: true,
+      };
+
+      const result = await adapter.convert(plan, {});
+
+      expect(result.success).toBe(true);
+      expect(fs.readFileSync(htmlOutput, 'utf-8')).toContain('<pre>A &lt; B &amp; C</pre>');
+    });
+
+    it('should remove markdown syntax when converting to text', async () => {
+      const markdownInput = createTestFile('doc-test-text.md', '# Heading\n\n**Bold** content');
+      const textOutput = getTestFilePath('doc-test-markdown-output.txt');
+      const plan = {
+        inputPath: markdownInput,
+        outputPath: textOutput,
+        inputFormat: 'md',
+        outputFormat: 'txt',
+        supported: true,
+      };
+
+      const result = await adapter.convert(plan, {});
+      const content = fs.readFileSync(textOutput, 'utf-8');
+
+      expect(result.success).toBe(true);
+      expect(content).toContain('Heading');
+      expect(content).toContain('Bold content');
+      expect(content).not.toContain('#');
+      expect(content).not.toContain('**');
+    });
+
+    it('should preserve plain text when converting to markdown', async () => {
+      const textInput = createTestFile('doc-test-markdown.txt', 'Plain text remains unchanged.');
+      const markdownOutput = getTestFilePath('doc-test-text-output.md');
+      const plan = {
+        inputPath: textInput,
+        outputPath: markdownOutput,
+        inputFormat: 'txt',
+        outputFormat: 'md',
+        supported: true,
+      };
+
+      const result = await adapter.convert(plan, {});
+
+      expect(result.success).toBe(true);
+      expect(fs.readFileSync(markdownOutput, 'utf-8')).toBe('Plain text remains unchanged.');
+    });
     it('should handle conversion errors gracefully for missing input', async () => {
       const nonExistentFile = getTestFilePath('non-existent.md');
       const plan = {
