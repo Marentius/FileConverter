@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.1](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.4.0...fileconverter-v1.4.1) (2026-07-28)
+
+
+### Bug Fixes
+
+* remove vulnerable jest tooling chain ([#59](https://github.com/Marentius/FileConverter/issues/59)) ([995b342](https://github.com/Marentius/FileConverter/commit/995b342d3415ff914baf56087ede57089efde4ae))
+* update vulnerable conversion dependencies ([#57](https://github.com/Marentius/FileConverter/issues/57)) ([12c9a1c](https://github.com/Marentius/FileConverter/commit/12c9a1ca703f0acb5e7e94f0037b397acf0c4051))
+
 ## [1.4.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.3.4...fileconverter-v1.4.0) (2026-07-01)
 
 
