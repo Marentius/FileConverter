@@ -136,7 +136,7 @@ describe('Converter Integration Tests', () => {
         try {
           fs.rmSync(dryRunOutputDir, { recursive: true, force: true });
         } catch (error) {
-          // Ignorer feil hvis filer er låst
+          // Ignorer feil hvis filer er lÃ¥st
           console.warn('Kunne ikke rydde opp dry-run output-mappe:', error);
         }
       }
@@ -154,7 +154,7 @@ describe('Converter Integration Tests', () => {
         retries: 2
       });
 
-      // I dry run mode skal vi få resultat uten å kjøre faktiske jobber
+      // I dry run mode skal vi fÃ¥ resultat uten Ã¥ kjÃ¸re faktiske jobber
       expect(result.totalJobs).toBeGreaterThan(0);
       expect(result.successfulJobs).toBeGreaterThan(0);
       expect(result.totalDuration).toBe(0);
@@ -163,5 +163,23 @@ describe('Converter Integration Tests', () => {
       const outputFiles = fs.readdirSync(dryRunOutputDir);
       expect(outputFiles.length).toBe(0);
     });
+  });
+  describe('Job Log Reports', () => {
+    it('writes requested JSON and text reports after a completed conversion', async () => {
+      const jsonPath = path.join(testOutputDir, 'reports', 'jobs.json');
+      const textPath = path.join(testOutputDir, 'reports', 'jobs.txt');
+      createTestFiles();
+
+      await converter.convert({
+        input: testInputDir,
+        output: testOutputDir,
+        format: 'html',
+        logFileJson: jsonPath,
+        logFileTxt: textPath,
+      });
+
+      expect(fs.existsSync(jsonPath)).toBe(true);
+      expect(fs.existsSync(textPath)).toBe(true);
+    }, 60000);
   });
 });

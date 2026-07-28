@@ -26,6 +26,8 @@ export interface ConversionOptions {
   pages?: string;
   // OCR-operasjoner
   language?: string;
+  logFileJson?: string;
+  logFileTxt?: string;
 }
 
 export interface ConversionJob {

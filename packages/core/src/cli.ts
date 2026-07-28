@@ -40,6 +40,8 @@ program
     (value) => parsePositiveInt(value, 'max-height'))
   .option('--strip-metadata', 'Remove metadata from images')
   .option('--preset <name>', 'Use preset (image/web, image/print, image/thumbnail, etc.)')
+  .option('--log-file-json <path>', 'Save conversion job logs as JSON')
+  .option('--log-file-txt <path>', 'Save conversion job logs as readable text')
   .action(async (options) => {
     try {
       const converter = new Converter();
@@ -57,6 +59,8 @@ program
         maxHeight: options.maxHeight,
         stripMetadata: options.stripMetadata || false,
         preset: options.preset,
+        logFileJson: options.logFileJson,
+        logFileTxt: options.logFileTxt,
       });
     } catch (error) {
       logger.error('CLI error', { error });
