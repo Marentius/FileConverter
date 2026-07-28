@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Upload, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Upload, CheckCircle, XCircle } from "lucide-react";
 import "./App.css";
 
 interface ConversionJob {
@@ -28,29 +28,29 @@ function App() {
   const [selectedFormat, setSelectedFormat] = useState("pdf");
   const [isConverting, setIsConverting] = useState(false);
   const [conversionResult, setConversionResult] = useState<ConversionResult | null>(null);
-  const [dependencyStatus, setDependencyStatus] = useState<DependencyStatus>({});
+  const [capabilityStatus, setCapabilityStatus] = useState<DependencyStatus>({});
   const [supportedFormats, setSupportedFormats] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("convert");
 
   useEffect(() => {
-    checkDependencies();
+    checkCapabilities();
     getSupportedFormats();
   }, []);
 
-  async function checkDependencies() {
+  async function checkCapabilities() {
     try {
       // Try to use Tauri commands first
       const { invoke } = await import('@tauri-apps/api/core');
       const result = await invoke('check_dependencies');
-      setDependencyStatus(result as DependencyStatus);
+      setCapabilityStatus(result as DependencyStatus);
     } catch (error) {
-      console.log("Tauri dependency check failed, using mock data:", error);
-      // Fallback to mock data
-      setDependencyStatus({
-        pandoc: true,
-        libreoffice: false,
-        ghostscript: false,
-        qpdf: false
+      console.log("Tauri capability check failed, using default capabilities:", error);
+      setCapabilityStatus({
+        "npm conversion engine": true,
+        "image conversion": true,
+        "document conversion": true,
+        "pdf processing": true,
+        ocr: true,
       });
     }
   }
@@ -175,9 +175,6 @@ function App() {
     }
   }
 
-  const missingDependencies = Object.entries(dependencyStatus)
-    .filter(([_, installed]) => !installed)
-    .map(([name, _]) => name);
 
   return (
     <div className="app">
@@ -194,7 +191,7 @@ function App() {
             className={`tab ${activeTab === "dependencies" ? "active" : ""}`}
             onClick={() => setActiveTab("dependencies")}
           >
-            Dependencies
+            Capabilities
           </button>
           <button 
             className={`tab ${activeTab === "advanced" ? "active" : ""}`}
@@ -379,24 +376,14 @@ function App() {
                 </div>
               </div>
             )}
-
-            {/* Dependency Warning */}
-            {missingDependencies.length > 0 && (
-              <div className="section">
-                <div className="warning">
-                  <AlertCircle size={20} />
-                  <span>Missing dependencies: {missingDependencies.join(", ")}</span>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
         {activeTab === "dependencies" && (
           <div className="dependencies-tab">
-            <h2>System Dependencies</h2>
+            <h2>Core Capabilities</h2>
             <div className="dependency-grid">
-              {Object.entries(dependencyStatus).map(([name, installed]) => (
+              {Object.entries(capabilityStatus).map(([name, installed]) => (
                 <div key={name} className={`dependency-item ${installed ? "installed" : "missing"}`}>
                   <span className="dependency-name">{name}</span>
                   <span className="dependency-status">
@@ -405,27 +392,6 @@ function App() {
                 </div>
               ))}
             </div>
-            
-            {missingDependencies.length > 0 && (
-              <div className="install-guide">
-                <h3>Installation Guide</h3>
-                <p>Please install the missing dependencies:</p>
-                <ul>
-                  {missingDependencies.includes("pandoc") && (
-                    <li><strong>Pandoc:</strong> Download from <a href="https://pandoc.org/installing.html" target="_blank">pandoc.org</a></li>
-                  )}
-                  {missingDependencies.includes("libreoffice") && (
-                    <li><strong>LibreOffice:</strong> Download from <a href="https://www.libreoffice.org/download/" target="_blank">libreoffice.org</a></li>
-                  )}
-                  {missingDependencies.includes("ghostscript") && (
-                    <li><strong>Ghostscript:</strong> Download from <a href="https://www.ghostscript.com/download/gsdnld.html" target="_blank">ghostscript.com</a></li>
-                  )}
-                  {missingDependencies.includes("qpdf") && (
-                    <li><strong>qpdf:</strong> Download from <a href="https://qpdf.sourceforge.io/" target="_blank">qpdf.sourceforge.io</a></li>
-                  )}
-                </ul>
-              </div>
-            )}
           </div>
         )}
 

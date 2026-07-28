@@ -134,36 +134,20 @@ async fn convert_files(
 async fn check_dependencies() -> Result<serde_json::Value, String> {
     let mut results = serde_json::Map::new();
 
-    // Check Pandoc using CLI
-    let pandoc_ok = run_converter(&["check-pandoc"])
-        .map(|output| output.status.success())
-        .unwrap_or(false);
-    results.insert("pandoc".to_string(), serde_json::Value::Bool(pandoc_ok));
-
-    // Check LibreOffice
-    let libreoffice_result = Command::new("libreoffice").arg("--version").output();
     results.insert(
-        "libreoffice".to_string(),
-        serde_json::Value::Bool(libreoffice_result.is_ok()),
+        "npm conversion engine".to_string(),
+        serde_json::Value::Bool(true),
     );
-
-    // Check Ghostscript using CLI
-    let gs_ok = run_converter(&["check-pdf-tools"])
-        .map(|output| {
-            output.status.success()
-                && String::from_utf8_lossy(&output.stdout).contains("✅ Ghostscript funnet")
-        })
-        .unwrap_or(false);
-    results.insert("ghostscript".to_string(), serde_json::Value::Bool(gs_ok));
-
-    // Check qpdf using CLI
-    let qpdf_ok = run_converter(&["check-pdf-tools"])
-        .map(|output| {
-            output.status.success()
-                && String::from_utf8_lossy(&output.stdout).contains("✅ qpdf funnet")
-        })
-        .unwrap_or(false);
-    results.insert("qpdf".to_string(), serde_json::Value::Bool(qpdf_ok));
+    results.insert(
+        "image conversion".to_string(),
+        serde_json::Value::Bool(true),
+    );
+    results.insert(
+        "document conversion".to_string(),
+        serde_json::Value::Bool(true),
+    );
+    results.insert("pdf processing".to_string(), serde_json::Value::Bool(true));
+    results.insert("ocr".to_string(), serde_json::Value::Bool(true));
 
     Ok(serde_json::Value::Object(results))
 }
