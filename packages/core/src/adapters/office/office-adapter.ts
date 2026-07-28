@@ -1,7 +1,7 @@
 import mammoth from 'mammoth';
 import JSZip from 'jszip';
 import { DOMParser } from '@xmldom/xmldom';
-import officeparser from 'officeparser';
+import { OfficeParser } from 'officeparser';
 import fs from 'fs';
 import path from 'path';
 import { BaseAdapter, ConversionParameters, ConversionResult } from '../base-adapter';
@@ -361,7 +361,12 @@ export class OfficeAdapter extends BaseAdapter {
    * Returns text wrapped in HTML paragraph tags.
    */
   private async readWithOfficeParser(filePath: string): Promise<string> {
-    const text = await officeparser.parseOfficeAsync(filePath);
+    const ast = await OfficeParser.parseOffice(filePath);
+    const { value } = await ast.to('text', {
+      includeImages: false,
+      textConfig: { preserveLayout: false, renderNotes: false },
+    });
+    const text = typeof value === 'string' ? value : String(value);
     const escaped = this.escapeHtml(text);
     const paragraphs = escaped
       .split(/\n\n+/)
