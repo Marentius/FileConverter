@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.5.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.4.2...fileconverter-v1.5.0) (2026-07-29)
+
+
+### Features
+
+* add conversion job log output files ([#64](https://github.com/Marentius/FileConverter/issues/64)) ([bf88863](https://github.com/Marentius/FileConverter/commit/bf8886387de66ce2a64be7e8d80b2ce7e0772d53))
+
+
+### Bug Fixes
+
+* address PDF renderer review feedback ([a62e1ff](https://github.com/Marentius/FileConverter/commit/a62e1ff88223ce4a892a6c850f5c660fef2325f4))
+* preserve structure in office PDF conversion ([86ee568](https://github.com/Marentius/FileConverter/commit/86ee5688748633112c8f00e1c84b63707e60dc24))
+* preserve structure in office PDF conversion ([#67](https://github.com/Marentius/FileConverter/issues/67)) ([6601f29](https://github.com/Marentius/FileConverter/commit/6601f2934a90e936f395c455c8940aa363e2ff7b))
+* sanitize HTML before PDF rendering ([760147f](https://github.com/Marentius/FileConverter/commit/760147fbac1954ed2c0f684b319dfcb584d2318f))
+
 ## [1.4.2](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.4.1...fileconverter-v1.4.2) (2026-07-28)
 
 
