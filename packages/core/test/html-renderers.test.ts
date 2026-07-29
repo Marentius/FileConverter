@@ -1,4 +1,6 @@
 import fs from 'fs';
+import path from 'path';
+import PDFDocument from 'pdfkit';
 import sharp from 'sharp';
 import { getTestFilePath } from './setup';
 import { renderHtmlToPdf, stripHtml } from '../src/adapters/document/html-renderers';
@@ -67,5 +69,38 @@ describe('stripHtml', () => {
     expect(pdf.subarray(0, 4).toString()).toBe('%PDF');
     expect(pdf.includes(Buffer.from('/Subtype /Image'))).toBe(true);
     expect(pdf.length).toBeGreaterThan(2_000);
+  });
+
+  it('uses the bold-oblique font for nested strong and emphasis tags', async () => {
+    const outputPath = getTestFilePath('nested-inline-styles.pdf');
+
+    await renderHtmlToPdf('<p><strong><em>Bold italic</em></strong></p>', outputPath);
+
+    expect(fs.readFileSync(outputPath).includes(Buffer.from('Helvetica-BoldOblique'))).toBe(true);
+  });
+
+  it('measures table cells using the table font size after a heading', async () => {
+    const outputPath = getTestFilePath('table-font-size.pdf');
+    const originalHeightOfString = PDFDocument.prototype.heightOfString;
+    const fontSizes: number[] = [];
+
+    PDFDocument.prototype.heightOfString = function (...args) {
+      fontSizes.push((this as PDFDocument & { _fontSize: number })._fontSize);
+      return originalHeightOfString.apply(this, args as [string, PDFKit.Mixins.TextOptions]);
+    };
+
+    try {
+      await renderHtmlToPdf('<h1>Heading</h1><table><tr><td>Cell</td></tr></table>', outputPath);
+    } finally {
+      PDFDocument.prototype.heightOfString = originalHeightOfString;
+    }
+
+    expect(fontSizes).toEqual([10]);
+  });
+
+  it('rejects when the output file cannot be created', async () => {
+    const outputPath = path.join(getTestFilePath('missing-output-directory'), 'output.pdf');
+
+    await expect(renderHtmlToPdf('<p>Content</p>', outputPath)).rejects.toThrow();
   });
 });

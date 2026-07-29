@@ -83,9 +83,22 @@ function textContent(node: any): string {
   return Array.from(node.childNodes || []).map(textContent).join('');
 }
 
-function renderInline(doc: PDFDocument, node: any): void {
+type InlineFont = 'Helvetica' | 'Helvetica-Bold' | 'Helvetica-Oblique' | 'Helvetica-BoldOblique';
+
+function inlineFont(tag: string, inheritedFont: InlineFont): InlineFont {
+  const bold = inheritedFont === 'Helvetica-Bold' || inheritedFont === 'Helvetica-BoldOblique'
+    || tag === 'strong' || tag === 'b';
+  const italic = inheritedFont === 'Helvetica-Oblique' || inheritedFont === 'Helvetica-BoldOblique'
+    || tag === 'em' || tag === 'i';
+  if (bold && italic) return 'Helvetica-BoldOblique';
+  if (bold) return 'Helvetica-Bold';
+  if (italic) return 'Helvetica-Oblique';
+  return 'Helvetica';
+}
+
+function renderInline(doc: PDFDocument, node: any, inheritedFont: InlineFont = 'Helvetica'): void {
   if (node.nodeType === 3) {
-    doc.text(node.data || '', { continued: true });
+    doc.font(inheritedFont).text(node.data || '', { continued: true });
     return;
   }
 
@@ -95,14 +108,8 @@ function renderInline(doc: PDFDocument, node: any): void {
     return;
   }
 
-  const previousFont = tag === 'strong' || tag === 'b'
-    ? 'Helvetica-Bold'
-    : tag === 'em' || tag === 'i'
-      ? 'Helvetica-Oblique'
-      : 'Helvetica';
-  doc.font(previousFont);
-  for (const child of Array.from(node.childNodes || [])) renderInline(doc, child);
-  doc.font('Helvetica');
+  const childFont = inlineFont(tag, inheritedFont);
+  for (const child of Array.from(node.childNodes || [])) renderInline(doc, child, childFont);
 }
 
 function renderTable(doc: PDFDocument, table: any, width: number): void {
@@ -113,6 +120,7 @@ function renderTable(doc: PDFDocument, table: any, width: number): void {
     const cellWidth = width / cells.length;
     const y = doc.y;
     const values = cells.map(textContent);
+    doc.font('Helvetica').fontSize(10);
     const heights = values.map((value) => doc.heightOfString(value, { width: cellWidth - 10 }));
     const rowHeight = Math.max(...heights, 14) + 10;
     cells.forEach((cell, index) => {
@@ -166,12 +174,18 @@ export function renderHtmlToPdf(html: string, outputPath: string): Promise<void>
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 50 });
     const stream = fs.createWriteStream(outputPath);
-    doc.pipe(stream);
-    const root = new DOMParser().parseFromString(`<root>${html}</root>`, 'text/html').documentElement;
-    const width = doc.page.width - 100;
-    for (const child of Array.from(root.childNodes || [])) renderBlock(doc, child, width);
-    doc.end();
     stream.on('finish', resolve);
     stream.on('error', reject);
+    doc.on('error', reject);
+
+    try {
+      doc.pipe(stream);
+      const root = new DOMParser().parseFromString(`<root>${html}</root>`, 'text/html').documentElement;
+      const width = doc.page.width - 100;
+      for (const child of Array.from(root.childNodes || [])) renderBlock(doc, child, width);
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
   });
 }
