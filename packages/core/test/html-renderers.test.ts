@@ -5,6 +5,16 @@ import sharp from 'sharp';
 import { getTestFilePath } from './setup';
 import { renderHtmlToPdf, stripHtml } from '../src/adapters/document/html-renderers';
 
+async function extractPdfText(outputPath: string): Promise<string> {
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const document = await pdfjs.getDocument({ data: new Uint8Array(fs.readFileSync(outputPath)) }).promise;
+  const pages = await Promise.all(Array.from({ length: document.numPages }, async (_, index) => {
+    const content = await (await document.getPage(index + 1)).getTextContent();
+    return content.items.map((item) => ('str' in item ? item.str : '')).join('');
+  }));
+  return pages.join('\n');
+}
+
 describe('stripHtml', () => {
   it('removes basic HTML tags', () => {
     expect(stripHtml('<p>Hello</p>')).toBe('Hello');
@@ -102,5 +112,16 @@ describe('stripHtml', () => {
     const outputPath = path.join(getTestFilePath('missing-output-directory'), 'output.pdf');
 
     await expect(renderHtmlToPdf('<p>Content</p>', outputPath)).rejects.toThrow();
+  });
+
+  it('does not render content from unsupported tags', async () => {
+    const outputPath = getTestFilePath('unsupported-html-output.pdf');
+
+    await renderHtmlToPdf('<p>Visible content</p><script>SECRET_SCRIPT</script><style>SECRET_STYLE</style>', outputPath);
+
+    const text = await extractPdfText(outputPath);
+    expect(text).toContain('Visible content');
+    expect(text).not.toContain('SECRET_SCRIPT');
+    expect(text).not.toContain('SECRET_STYLE');
   });
 });

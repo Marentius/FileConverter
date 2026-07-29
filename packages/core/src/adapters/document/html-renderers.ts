@@ -72,8 +72,24 @@ export function htmlToMarkdown(html: string): string {
   return turndown.turndown(html);
 }
 
+const PDF_ALLOWED_TAGS = [
+  'h1', 'h2', 'h3', 'p', 'strong', 'b', 'em', 'i', 'br',
+  'ul', 'ol', 'li', 'table', 'tr', 'th', 'td', 'img', 'hr',
+];
+
+function sanitizeHtmlForPdf(html: string): string {
+  return sanitizeHtml(html, {
+    allowedTags: PDF_ALLOWED_TAGS,
+    allowedAttributes: { img: ['src'] },
+    allowedSchemes: ['data'],
+    allowedSchemesByTag: { img: ['data'] },
+    allowProtocolRelative: false,
+  });
+}
+
 /**
- * Renders HTML content to a PDF by stripping tags and using pdfkit.
+ * Renders a sanitized subset of HTML to PDF using PDFKit.
+ * Supports headings, paragraphs, inline emphasis, lists, tables, and data-URI images.
  * @param html - HTML content
  * @param outputPath - Destination file path
  * @returns Promise that resolves when the PDF is written
@@ -180,7 +196,7 @@ export function renderHtmlToPdf(html: string, outputPath: string): Promise<void>
 
     try {
       doc.pipe(stream);
-      const root = new DOMParser().parseFromString(`<root>${html}</root>`, 'text/html').documentElement;
+      const root = new DOMParser().parseFromString(`<root>${sanitizeHtmlForPdf(html)}</root>`, 'text/html').documentElement;
       const width = doc.page.width - 100;
       for (const child of Array.from(root.childNodes || [])) renderBlock(doc, child, width);
       doc.end();
