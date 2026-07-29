@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.3](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.5.2...fileconverter-v1.5.3) (2026-07-29)
+
+
+### Bug Fixes
+
+* upgrade pdfkit to remove jpeg-exif ([abfe575](https://github.com/Marentius/FileConverter/commit/abfe57559cc0251eb77a2f5ba8c1ecf6260233e9))
+* upgrade pdfkit to remove jpeg-exif ([f879318](https://github.com/Marentius/FileConverter/commit/f879318c6c3775d3c4ba9c994355fdb4c3992067))
+
 ## [1.5.2](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.5.1...fileconverter-v1.5.2) (2026-07-29)
 
 
