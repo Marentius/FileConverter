@@ -92,4 +92,10 @@ export const logger: Logger = winston.createLogger({
   transports
 });
 
+export function setConsoleLoggingEnabled(enabled: boolean): void {
+  for (const transport of transports) {
+    if (transport instanceof winston.transports.Console) transport.silent = !enabled;
+  }
+}
+
 export default logger;

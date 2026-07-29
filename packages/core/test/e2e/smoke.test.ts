@@ -64,6 +64,17 @@ describe('E2E Smoke Tests', () => {
       expect(fs.existsSync(path.join(outputDir, 'job-logs.json'))).toBe(true);
       expect(fs.existsSync(path.join(outputDir, 'job-logs.txt'))).toBe(true);
     }, 60000);
+
+    it('should emit one machine-readable result with --json', () => {
+      createTestFile('json-result.md', '# JSON Result');
+
+      const output = runCLI(['convert', '--in', 'json-result.md', '--out', 'output', '--to', 'html', '--json']);
+      const result = JSON.parse(output);
+
+      expect(result.successfulJobs).toBe(1);
+      expect(result.failedJobs).toBe(0);
+      expect(result.jobs[0].plan.outputPath).toMatch(/json-result\.html$/);
+    }, 60000);
   });
 
   describe('Representative Job 2: Batch Conversion', () => {
