@@ -43,4 +43,19 @@ describe('LibreOffice PDF renderer', () => {
     expect(converted).toBe(true);
     expect(fs.readFileSync(outputPath, 'utf-8')).toBe('%PDF-1.7');
   });
+
+  it('returns false when LibreOffice fails so the caller can use its fallback renderer', async () => {
+    const executable = getTestFilePath('soffice-failing.exe');
+    fs.writeFileSync(executable, '');
+
+    await expect(renderOfficeToPdfWithLibreOffice(
+      getTestFilePath('unsupported.odt'),
+      getTestFilePath('unsupported.pdf'),
+      {
+        environment: { LIBREOFFICE_PATH: executable },
+        executablePaths: [],
+        run: async () => { throw new Error('LibreOffice rejected the document'); },
+      }
+    )).resolves.toBe(false);
+  });
 });

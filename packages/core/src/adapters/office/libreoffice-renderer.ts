@@ -84,6 +84,8 @@ export async function renderOfficeToPdfWithLibreOffice(
     await fs.promises.mkdir(path.dirname(outputPath), { recursive: true });
     await fs.promises.copyFile(generatedPdf, outputPath);
     return true;
+  } catch {
+    return false;
   } finally {
     await fs.promises.rm(temporaryRoot, { recursive: true, force: true });
   }
