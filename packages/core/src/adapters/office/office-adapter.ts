@@ -15,13 +15,15 @@ import {
   htmlToMarkdown,
 } from '../document/html-renderers';
 import { renderOfficeToPdfWithLibreOffice } from './libreoffice-renderer';
+import { renderOfficeToPdfWithMicrosoftWord } from './microsoft-word-renderer';
 
 type OfficePdfRenderer = (inputPath: string, outputPath: string) => Promise<boolean>;
 
 /**
- * Office document adapter using LibreOffice when available, with npm fallbacks.
- * Converts DOCX, XLSX, PPTX, ODT, and RTF to PDF with LibreOffice for layout fidelity.
+ * Office document adapter using Microsoft Word and LibreOffice when available.
+ * Converts Office documents to PDF with the highest-fidelity available renderer.
  *
+ * - Microsoft Word: DOCX/RTF -> PDF (Windows, when installed)
  * - LibreOffice: Office -> PDF (when installed)
  * - mammoth: DOCX -> HTML (semantic, preserves headings/lists/tables/images)
  * - JSZip + XML parsing: XLSX -> HTML tables
@@ -32,7 +34,10 @@ export class OfficeAdapter extends BaseAdapter {
   readonly supportedInputFormats = ['docx', 'xlsx', 'pptx', 'odt', 'rtf'];
   readonly supportedOutputFormats = ['pdf', 'html', 'txt', 'md'];
 
-  constructor(private readonly renderOfficeToPdf: OfficePdfRenderer = renderOfficeToPdfWithLibreOffice) {
+  constructor(
+    private readonly renderWithMicrosoftWord: OfficePdfRenderer = renderOfficeToPdfWithMicrosoftWord,
+    private readonly renderWithLibreOffice: OfficePdfRenderer = renderOfficeToPdfWithLibreOffice
+  ) {
     super();
   }
 
@@ -65,20 +70,20 @@ export class OfficeAdapter extends BaseAdapter {
         outputFormat: outputFmt,
       });
 
-      let renderedByLibreOffice = false;
+      let pdfRenderer: string | undefined;
       if (outputFmt === 'pdf') {
-        renderedByLibreOffice = await this.renderOfficeToPdf(plan.inputPath, plan.outputPath);
+        pdfRenderer = await this.renderOfficePdf(plan.inputPath, inputFmt, plan.outputPath);
       }
 
-      if (renderedByLibreOffice) {
-        logger.debug('Office adapter: PDF rendered with LibreOffice', {
+      if (pdfRenderer) {
+        logger.debug(`Office adapter: PDF rendered with ${pdfRenderer}`, {
           input: plan.inputPath,
           output: plan.outputPath,
         });
       } else {
         if (outputFmt === 'pdf') {
           logger.warn(
-            'LibreOffice was not found. PDF output uses semantic fallback rendering; complex layouts, fonts, and positioning are not preserved.'
+            'No compatible external Office renderer was found. PDF output uses semantic fallback rendering; complex layouts, fonts, and positioning are not preserved.'
           );
         }
         const html = await this.readToHtml(plan.inputPath, inputFmt);
@@ -114,6 +119,14 @@ export class OfficeAdapter extends BaseAdapter {
 
       return { success: false, outputPath: plan.outputPath, duration, error: errorMessage };
     }
+  }
+
+  private async renderOfficePdf(inputPath: string, inputFormat: string, outputPath: string): Promise<string | undefined> {
+    if (inputFormat === 'docx' || inputFormat === 'rtf') {
+      if (await this.renderWithMicrosoftWord(inputPath, outputPath)) return 'Microsoft Word';
+    }
+    if (await this.renderWithLibreOffice(inputPath, outputPath)) return 'LibreOffice';
+    return undefined;
   }
 
   /**
