@@ -101,7 +101,8 @@ program
 
       const convertOptions: ConversionOptions = {
         input: input!,
-        output: options.out,
+        output: path.dirname(options.out),
+        outputFile: options.out,
         format: 'pdf',
         operation,
         pages: options.pages,
@@ -128,7 +129,8 @@ program
 
       await converter.convert({
         input: options.in,
-        output: options.out,
+        output: path.dirname(options.out),
+        outputFile: options.out,
         format: 'txt',
         language: options.lang,
       });

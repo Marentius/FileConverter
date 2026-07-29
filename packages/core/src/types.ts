@@ -10,6 +10,8 @@ export interface ConversionPlan {
 export interface ConversionOptions {
   input: string;
   output: string;
+  /** Exact destination for single-file conversions. */
+  outputFile?: string;
   format: string;
   recursive?: boolean;
   dryRun?: boolean;
