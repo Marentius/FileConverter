@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.2](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.5.1...fileconverter-v1.5.2) (2026-07-29)
+
+
+### Bug Fixes
+
+* honor explicit CLI output file paths ([03b14a7](https://github.com/Marentius/FileConverter/commit/03b14a7b7b52f57c872d1e694db0f464198cee78))
+* honor explicit CLI output file paths ([7448360](https://github.com/Marentius/FileConverter/commit/7448360673fe296fbdbe206ff794a1923c3bb53f))
+
 ## [1.5.1](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.5.0...fileconverter-v1.5.1) (2026-07-29)
 
 
