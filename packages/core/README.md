@@ -46,6 +46,8 @@ converter pdf --split thesis.pdf --pages 1-5,10 -o excerpt.pdf
 converter ocr -i scan.png -o result.txt --lang eng
 ```
 
+> Office-to-PDF conversions automatically use LibreOffice when it is installed, which preserves document layout more faithfully. Without LibreOffice, FileConverter uses a semantic npm fallback that preserves basic content but not complex layout, fonts, or positioning. Set `LIBREOFFICE_PATH` to use an executable outside the standard install locations.
+
 ## Supported Formats
 
 | Category | Input | Output |
