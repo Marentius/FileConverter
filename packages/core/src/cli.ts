@@ -8,7 +8,7 @@ import { getSupportedFormats } from './file-detector';
 import { listPresets } from './presets/image-presets';
 import { ConfigManager } from './config/config-manager';
 import { parsePositiveInt, parseIntInRange } from './input-validation';
-import logger from './logger';
+import logger, { setConsoleLoggingEnabled } from './logger';
 import chalk from 'chalk';
 
 declare const __PKG_VERSION__: string;
@@ -42,11 +42,13 @@ program
   .option('--preset <name>', 'Use preset (image/web, image/print, image/thumbnail, etc.)')
   .option('--log-file-json <path>', 'Save conversion job logs as JSON')
   .option('--log-file-txt <path>', 'Save conversion job logs as readable text')
+  .option('--json', 'Write the conversion result as JSON')
   .action(async (options) => {
     try {
       const converter = new Converter();
+      if (options.json) setConsoleLoggingEnabled(false);
 
-      await converter.convert({
+      const result = await converter.convert({
         input: options.in,
         output: options.out,
         format: options.to,
@@ -61,7 +63,9 @@ program
         preset: options.preset,
         logFileJson: options.logFileJson,
         logFileTxt: options.logFileTxt,
+        quiet: options.json || false,
       });
+      if (options.json) console.log(JSON.stringify(result));
     } catch (error) {
       logger.error('CLI error', { error });
       console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);

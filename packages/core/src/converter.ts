@@ -32,6 +32,7 @@ export class Converter {
       pages,
       logFileJson,
       logFileTxt
+      , quiet = false
     } = options;
     
     logger.info('Starting file conversion', { 
@@ -81,11 +82,11 @@ export class Converter {
       const unsupportedPlans = plans.filter(p => !p.supported);
       
       // Show summary
-      this.displaySummary(plans, supportedPlans, unsupportedPlans, dryRun);
+      if (!quiet) this.displaySummary(plans, supportedPlans, unsupportedPlans, dryRun);
       
       if (dryRun) {
         // Show detailed plan for dry-run
-        this.displayDetailedPlan(plans);
+        if (!quiet) this.displayDetailedPlan(plans);
         return {
           totalJobs: plans.length,
           successfulJobs: supportedPlans.length,
@@ -131,7 +132,7 @@ export class Converter {
       return await this.processJobs(supportedPlans, concurrency, retries, finalParameters, {
         jsonPath: logFileJson,
         textPath: logFileTxt,
-      });
+      }, quiet);
       
     } catch (error) {
       logger.error('Error during conversion', { error });
@@ -145,24 +146,25 @@ export class Converter {
     retries: number,
     parameters: ConversionParameters,
     reportOptions: JobLogReportOptions
+    , quiet: boolean
   ): Promise<ConversionResult> {
     const jobQueue = new JobQueue(concurrency);
     const progressTracker = new ProgressTracker();
     
     // Start progress tracking
-    progressTracker.start(plans.length);
+    if (!quiet) progressTracker.start(plans.length);
     
     // Legg til event listeners for progress tracking
     jobQueue.on('jobStarted', (job) => {
-      progressTracker.updateJobStatus(job);
+      if (!quiet) progressTracker.updateJobStatus(job);
     });
     
     jobQueue.on('jobCompleted', (job) => {
-      progressTracker.updateJobStatus(job);
+      if (!quiet) progressTracker.updateJobStatus(job);
     });
     
     jobQueue.on('jobFailed', (job) => {
-      progressTracker.updateJobStatus(job);
+      if (!quiet) progressTracker.updateJobStatus(job);
     });
     
     // Legg til alle jobber i køen
@@ -176,8 +178,10 @@ export class Converter {
     const jobLogs = jobQueue.getJobLogs();
 
     // Stopp progress tracking og vis sammendrag
-    progressTracker.stop();
-    progressTracker.displaySummary(result);
+    if (!quiet) {
+      progressTracker.stop();
+      progressTracker.displaySummary(result);
+    }
 
     await writeJobLogReports(reportOptions, result, jobLogs);
 

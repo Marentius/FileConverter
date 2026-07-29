@@ -30,6 +30,7 @@ export interface ConversionOptions {
   language?: string;
   logFileJson?: string;
   logFileTxt?: string;
+  quiet?: boolean;
 }
 
 export interface ConversionJob {
