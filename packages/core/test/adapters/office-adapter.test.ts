@@ -170,17 +170,44 @@ describe('OfficeAdapter', () => {
         expect(fs.statSync(outputPath).size).toBeGreaterThan(0);
       });
 
-      it('uses LibreOffice output when the renderer is available', async () => {
+      it('uses Microsoft Word output before LibreOffice for DOCX files', async () => {
         const inputPath = getTestFilePath('libreoffice-input.docx');
         const outputPath = getTestFilePath('libreoffice-output.pdf');
         fs.writeFileSync(inputPath, 'not a DOCX file');
-        const libreOfficeAdapter = new OfficeAdapter(async (_input, output) => {
-          fs.writeFileSync(output, '%PDF-libreoffice');
-          return true;
-        });
+        const wordAdapter = new OfficeAdapter(
+          async (_input, output) => {
+            fs.writeFileSync(output, '%PDF-word');
+            return true;
+          },
+          async () => {
+            throw new Error('LibreOffice should not run after a Word conversion');
+          }
+        );
+
+        const result = await wordAdapter.convert({
+          inputPath,
+          outputPath,
+          inputFormat: 'docx',
+          outputFormat: 'pdf',
+          supported: true,
+        }, {});
+
+        expect(result.success).toBe(true);
+        expect(fs.readFileSync(outputPath, 'utf-8')).toBe('%PDF-word');
+      });
+
+      it('uses LibreOffice when Microsoft Word is unavailable', async () => {
+        const outputPath = getTestFilePath('docx-libreoffice-output.pdf');
+        const libreOfficeAdapter = new OfficeAdapter(
+          async () => false,
+          async (_input, output) => {
+            fs.writeFileSync(output, '%PDF-libreoffice');
+            return true;
+          }
+        );
 
         const result = await libreOfficeAdapter.convert({
-          inputPath,
+          inputPath: testDocxPath,
           outputPath,
           inputFormat: 'docx',
           outputFormat: 'pdf',
@@ -191,9 +218,9 @@ describe('OfficeAdapter', () => {
         expect(fs.readFileSync(outputPath, 'utf-8')).toBe('%PDF-libreoffice');
       });
 
-      it('falls back to semantic PDF rendering when LibreOffice is unavailable', async () => {
+      it('falls back to semantic PDF rendering when no external renderer is available', async () => {
         const outputPath = getTestFilePath('docx-fallback-output.pdf');
-        const fallbackAdapter = new OfficeAdapter(async () => false);
+        const fallbackAdapter = new OfficeAdapter(async () => false, async () => false);
 
         const result = await fallbackAdapter.convert({
           inputPath: testDocxPath,
@@ -209,9 +236,12 @@ describe('OfficeAdapter', () => {
 
       it('returns a failed conversion when LibreOffice rendering fails', async () => {
         const outputPath = getTestFilePath('docx-libreoffice-error.pdf');
-        const failingAdapter = new OfficeAdapter(async () => {
-          throw new Error('LibreOffice failed');
-        });
+        const failingAdapter = new OfficeAdapter(
+          async () => false,
+          async () => {
+            throw new Error('LibreOffice failed');
+          }
+        );
 
         const result = await failingAdapter.convert({
           inputPath: testDocxPath,
