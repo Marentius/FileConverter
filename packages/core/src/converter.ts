@@ -16,6 +16,7 @@ export class Converter {
     const { 
       input, 
       output, 
+      outputFile,
       format, 
       recursive = false, 
       dryRun = false,
@@ -44,7 +45,8 @@ export class Converter {
     });
     
     try {
-      const resolvedOutput = path.resolve(output);
+      const outputDirectory = outputFile ? path.dirname(outputFile) : output;
+      const resolvedOutput = path.resolve(outputDirectory);
 
       if (!fs.existsSync(resolvedOutput)) {
         fs.mkdirSync(resolvedOutput, { recursive: true });
@@ -52,7 +54,16 @@ export class Converter {
       }
       
       // Scan for files and create conversion plan
-      const plans = await scanForFiles(input, output, format, recursive);
+      const plans = await scanForFiles(input, resolvedOutput, format, recursive);
+
+      if (outputFile) {
+        if (plans.length !== 1) {
+          throw new Error('An explicit output file requires exactly one input file');
+        }
+
+        const resolvedOutputFile = validatePath(outputFile, resolvedOutput);
+        plans[0].outputPath = resolvedOutputFile;
+      }
       
       if (plans.length === 0) {
         logger.warn('No files found for conversion');

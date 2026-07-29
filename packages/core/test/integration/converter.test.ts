@@ -93,6 +93,26 @@ describe('Converter Integration Tests', () => {
     }, 60000);
   });
 
+  describe('Explicit Output Files', () => {
+    it('writes a single conversion to the requested output file', async () => {
+      const inputFile = path.join(testInputDir, 'source.md');
+      const outputFile = path.join(testOutputDir, 'requested-name.html');
+      fs.writeFileSync(inputFile, '# Explicit output file');
+
+      const result = await converter.convert({
+        input: inputFile,
+        output: testOutputDir,
+        outputFile,
+        format: 'html',
+      });
+
+      expect(result.successfulJobs).toBe(1);
+      expect(fs.existsSync(outputFile)).toBe(true);
+      expect(fs.statSync(outputFile).isFile()).toBe(true);
+      expect(fs.existsSync(path.join(outputFile, 'source.html'))).toBe(false);
+    });
+  });
+
   describe('Error Handling', () => {
     it('should handle non-existent input directory', async () => {
       const nonExistentDir = path.join(testInputDir, 'non-existent');
