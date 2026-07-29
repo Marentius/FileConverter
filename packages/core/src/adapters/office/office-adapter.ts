@@ -14,11 +14,15 @@ import {
   wrapInHtmlDocument,
   htmlToMarkdown,
 } from '../document/html-renderers';
+import { renderOfficeToPdfWithLibreOffice } from './libreoffice-renderer';
+
+type OfficePdfRenderer = (inputPath: string, outputPath: string) => Promise<boolean>;
 
 /**
- * Office document adapter using pure JavaScript libraries.
- * Converts DOCX, XLSX, PPTX, ODT, and RTF without external system programs.
+ * Office document adapter using LibreOffice when available, with npm fallbacks.
+ * Converts DOCX, XLSX, PPTX, ODT, and RTF to PDF with LibreOffice for layout fidelity.
  *
+ * - LibreOffice: Office -> PDF (when installed)
  * - mammoth: DOCX -> HTML (semantic, preserves headings/lists/tables/images)
  * - JSZip + XML parsing: XLSX -> HTML tables
  * - officeparser: PPTX/ODT/RTF -> plain text extraction
@@ -27,6 +31,10 @@ export class OfficeAdapter extends BaseAdapter {
   readonly name = 'office';
   readonly supportedInputFormats = ['docx', 'xlsx', 'pptx', 'odt', 'rtf'];
   readonly supportedOutputFormats = ['pdf', 'html', 'txt', 'md'];
+
+  constructor(private readonly renderOfficeToPdf: OfficePdfRenderer = renderOfficeToPdfWithLibreOffice) {
+    super();
+  }
 
   async convert(
     plan: ConversionPlan,
@@ -57,14 +65,25 @@ export class OfficeAdapter extends BaseAdapter {
         outputFormat: outputFmt,
       });
 
+      let renderedByLibreOffice = false;
       if (outputFmt === 'pdf') {
-        logger.warn(
-          'PDF output preserves basic headings, paragraphs, lists, tables, and embedded images. Complex layouts and CSS are not preserved.'
-        );
+        renderedByLibreOffice = await this.renderOfficeToPdf(plan.inputPath, plan.outputPath);
       }
 
-      const html = await this.readToHtml(plan.inputPath, inputFmt);
-      await this.writeOutput(html, outputFmt, plan.outputPath);
+      if (renderedByLibreOffice) {
+        logger.debug('Office adapter: PDF rendered with LibreOffice', {
+          input: plan.inputPath,
+          output: plan.outputPath,
+        });
+      } else {
+        if (outputFmt === 'pdf') {
+          logger.warn(
+            'LibreOffice was not found. PDF output uses semantic fallback rendering; complex layouts, fonts, and positioning are not preserved.'
+          );
+        }
+        const html = await this.readToHtml(plan.inputPath, inputFmt);
+        await this.writeOutput(html, outputFmt, plan.outputPath);
+      }
 
       const duration = Date.now() - startTime;
       const outputSize = fs.existsSync(plan.outputPath) ? fs.statSync(plan.outputPath).size : 0;
