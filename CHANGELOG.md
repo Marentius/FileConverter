@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.5.1](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.5.0...fileconverter-v1.5.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* prefer LibreOffice for office PDF output ([5cdb8a8](https://github.com/Marentius/FileConverter/commit/5cdb8a8c344167aa7be10ee3130a6497d7fe1c4d))
+* prefer Microsoft Word for document PDFs ([ccf0fe7](https://github.com/Marentius/FileConverter/commit/ccf0fe73fa4225bd98984eb0e4f134c061a50136))
+* prefer Microsoft Word for document PDFs ([0858484](https://github.com/Marentius/FileConverter/commit/08584849b2641cd5a3a36260232bf0aa0e012d07))
+
 ## [1.5.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.4.2...fileconverter-v1.5.0) (2026-07-29)
 
 
