@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.5.3...fileconverter-v1.6.0) (2026-07-30)
+
+
+### Features
+
+* add JSON conversion output ([afceb17](https://github.com/Marentius/FileConverter/commit/afceb17d2d32e2989e9617f53a99b19500d3e16c))
+* add PDF text extraction ([0ac26ee](https://github.com/Marentius/FileConverter/commit/0ac26eef02c978ab5841d4ed08d47b0a8f273700))
+
 ## [1.5.3](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.5.2...fileconverter-v1.5.3) (2026-07-29)
 
 
