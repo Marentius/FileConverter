@@ -13,7 +13,7 @@ import logger from '../../logger';
 export class PdfAdapter extends BaseAdapter {
   readonly name = 'pdf';
   readonly supportedInputFormats = ['pdf'];
-  readonly supportedOutputFormats = ['pdf'];
+  readonly supportedOutputFormats = ['pdf', 'txt'];
 
   async convert(
     plan: ConversionPlan,
@@ -33,7 +33,9 @@ export class PdfAdapter extends BaseAdapter {
       const originalSize = fs.statSync(plan.inputPath).size;
       let result: ConversionResult;
 
-      if (parameters.operation === 'merge') {
+      if (plan.outputFormat === 'txt') {
+        result = await this.extractText(plan.inputPath, plan.outputPath);
+      } else if (parameters.operation === 'merge') {
         result = await this.mergePdfs(parameters.inputFiles ?? [plan.inputPath], plan.outputPath);
       } else if (parameters.operation === 'split') {
         result = await this.splitPdf(plan.inputPath, plan.outputPath, parameters.pages);
@@ -67,6 +69,21 @@ export class PdfAdapter extends BaseAdapter {
 
       return { success: false, outputPath: plan.outputPath, duration, error: errorMessage };
     }
+  }
+
+  private async extractText(inputPath: string, outputPath: string): Promise<ConversionResult> {
+    const startTime = Date.now();
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const document = await pdfjs.getDocument({ data: new Uint8Array(fs.readFileSync(inputPath)) }).promise;
+    const pages: string[] = [];
+    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
+      const content = await (await document.getPage(pageNumber)).getTextContent();
+      pages.push(content.items.map((item) => ('str' in item ? item.str : '')).join(' '));
+    }
+    await document.destroy();
+    const text = pages.join('\n\n');
+    fs.writeFileSync(outputPath, text, 'utf8');
+    return { success: true, outputPath, duration: Date.now() - startTime, metadata: { format: 'txt', characters: text.length } };
   }
 
   /**
