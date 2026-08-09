@@ -210,6 +210,29 @@ describe('Converter Integration Tests', () => {
       expect(outputFiles.length).toBe(0);
     });
   });
+
+  describe('Normal Mode', () => {
+    it('continues to execute recognized format pairs without an adapter', async () => {
+      const inputFile = path.join(testInputDir, 'unsupported-pair.jpg');
+
+      await sharp({
+        create: { width: 1, height: 1, channels: 3, background: { r: 255, g: 0, b: 0 } },
+      }).jpeg().toFile(inputFile);
+
+      const result = await converter.convert({
+        input: inputFile,
+        output: testOutputDir,
+        format: 'pdf',
+        retries: 0,
+        quiet: true,
+      });
+
+      expect(result.totalJobs).toBe(1);
+      expect(result.successfulJobs).toBe(0);
+      expect(result.failedJobs).toBe(1);
+    });
+  });
+
   describe('Job Log Reports', () => {
     it('writes requested JSON and text reports after a completed conversion', async () => {
       const jsonPath = path.join(testOutputDir, 'reports', 'jobs.json');
