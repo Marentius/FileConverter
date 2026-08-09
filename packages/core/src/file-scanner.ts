@@ -4,6 +4,7 @@ import { detectFileType } from './file-detector';
 import { ConversionPlan } from './types';
 import { validatePath, sanitizeFilename } from './path-security';
 import { sanitizeLogValue } from './log-sanitizer';
+import { AdapterManager } from './adapters/adapter-manager';
 import logger from './logger';
 
 export async function scanForFiles(
@@ -13,6 +14,7 @@ export async function scanForFiles(
   recursive: boolean = false
 ): Promise<ConversionPlan[]> {
   const plans: ConversionPlan[] = [];
+  const adapterManager = new AdapterManager();
   
   try {
     // Check if input is a file or directory
@@ -20,7 +22,7 @@ export async function scanForFiles(
     
     if (stats.isFile()) {
       // Single file
-      const plan = await createConversionPlan(inputPath, outputDir, targetFormat);
+      const plan = await createConversionPlan(inputPath, outputDir, targetFormat, adapterManager);
       plans.push(plan);
     } else if (stats.isDirectory()) {
       // Directory - find all files
@@ -47,7 +49,7 @@ export async function scanForFiles(
       });
       
       for (const file of files) {
-        const plan = await createConversionPlan(file, outputDir, targetFormat);
+        const plan = await createConversionPlan(file, outputDir, targetFormat, adapterManager);
         plans.push(plan);
       }
     } else {
@@ -65,7 +67,8 @@ export async function scanForFiles(
 async function createConversionPlan(
   inputPath: string,
   outputDir: string,
-  targetFormat: string
+  targetFormat: string,
+  adapterManager: AdapterManager
 ): Promise<ConversionPlan> {
   const fileType = await detectFileType(inputPath);
   const inputFormat = fileType.ext;
@@ -79,13 +82,13 @@ async function createConversionPlan(
   validatePath(outputPath, outputDir);
   
   // Check if conversion is supported
-  const supported = fileType.supported && isSupportedFormat(targetFormat);
+  const supported = fileType.supported && adapterManager.getAdapter(inputFormat, targetFormat) !== null;
   let reason: string | undefined;
   
   if (!fileType.supported) {
     reason = `Input format '${inputFormat}' is not supported`;
-  } else if (!isSupportedFormat(targetFormat)) {
-    reason = `Output format '${targetFormat}' is not supported`;
+  } else if (!supported) {
+    reason = `Conversion from '${inputFormat}' to '${targetFormat}' is not supported`;
   }
   
   return {
@@ -96,17 +99,4 @@ async function createConversionPlan(
     supported,
     reason
   };
-}
-
-function isSupportedFormat(format: string): boolean {
-  const supportedFormats = [
-    // Image formats
-    'png', 'jpg', 'jpeg', 'webp', 'tiff', 'bmp', 'gif', 'heic',
-    // Document formats
-    'docx', 'pptx', 'xlsx', 'odt', 'pdf', 'md', 'html', 'rtf', 'txt',
-    // Video/audio
-    'mp4', 'mov', 'mp3', 'wav'
-  ];
-  
-  return supportedFormats.includes(format.toLowerCase());
 }
