@@ -6,11 +6,14 @@ import { validatePath, sanitizeFilename } from './path-security';
 import { sanitizeLogValue } from './log-sanitizer';
 import logger from './logger';
 
+export type ConversionSupportChecker = (inputFormat: string, outputFormat: string) => boolean;
+
 export async function scanForFiles(
   inputPath: string,
   outputDir: string,
   targetFormat: string,
-  recursive: boolean = false
+  recursive: boolean = false,
+  supportsConversion?: ConversionSupportChecker
 ): Promise<ConversionPlan[]> {
   const plans: ConversionPlan[] = [];
   
@@ -20,7 +23,7 @@ export async function scanForFiles(
     
     if (stats.isFile()) {
       // Single file
-      const plan = await createConversionPlan(inputPath, outputDir, targetFormat);
+      const plan = await createConversionPlan(inputPath, outputDir, targetFormat, supportsConversion);
       plans.push(plan);
     } else if (stats.isDirectory()) {
       // Directory - find all files
@@ -47,7 +50,7 @@ export async function scanForFiles(
       });
       
       for (const file of files) {
-        const plan = await createConversionPlan(file, outputDir, targetFormat);
+        const plan = await createConversionPlan(file, outputDir, targetFormat, supportsConversion);
         plans.push(plan);
       }
     } else {
@@ -65,7 +68,8 @@ export async function scanForFiles(
 async function createConversionPlan(
   inputPath: string,
   outputDir: string,
-  targetFormat: string
+  targetFormat: string,
+  supportsConversion?: ConversionSupportChecker
 ): Promise<ConversionPlan> {
   const fileType = await detectFileType(inputPath);
   const inputFormat = fileType.ext;
@@ -79,13 +83,18 @@ async function createConversionPlan(
   validatePath(outputPath, outputDir);
   
   // Check if conversion is supported
-  const supported = fileType.supported && isSupportedFormat(targetFormat);
+  const outputSupported = supportsConversion
+    ? supportsConversion(inputFormat, targetFormat)
+    : isSupportedFormat(targetFormat);
+  const supported = fileType.supported && outputSupported;
   let reason: string | undefined;
   
   if (!fileType.supported) {
     reason = `Input format '${inputFormat}' is not supported`;
-  } else if (!isSupportedFormat(targetFormat)) {
-    reason = `Output format '${targetFormat}' is not supported`;
+  } else if (!supported) {
+    reason = supportsConversion
+      ? `Conversion from '${inputFormat}' to '${targetFormat}' is not supported`
+      : `Output format '${targetFormat}' is not supported`;
   }
   
   return {
@@ -107,6 +116,6 @@ function isSupportedFormat(format: string): boolean {
     // Video/audio
     'mp4', 'mov', 'mp3', 'wav'
   ];
-  
+
   return supportedFormats.includes(format.toLowerCase());
 }

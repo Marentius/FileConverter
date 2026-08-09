@@ -3,6 +3,7 @@ import { createTestFile, cleanupTestFiles, getTestFilePath } from '../setup';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import sharp from 'sharp';
 
 describe('Converter Integration Tests', () => {
   let converter: Converter;
@@ -149,6 +150,31 @@ describe('Converter Integration Tests', () => {
   });
 
   describe('Dry Run Mode', () => {
+    it('reports a recognized format pair without an adapter as unsupported', async () => {
+      const dryRunInputDir = path.join(testInputDir, 'unsupported-pair');
+      const dryRunOutputDir = path.join(testOutputDir, 'unsupported-pair');
+      const inputFile = path.join(dryRunInputDir, 'source.jpg');
+
+      fs.mkdirSync(dryRunInputDir, { recursive: true });
+      fs.mkdirSync(dryRunOutputDir, { recursive: true });
+      await sharp({
+        create: { width: 1, height: 1, channels: 3, background: { r: 255, g: 0, b: 0 } },
+      }).jpeg().toFile(inputFile);
+
+      const result = await converter.convert({
+        input: inputFile,
+        output: dryRunOutputDir,
+        format: 'pdf',
+        dryRun: true,
+        quiet: true,
+      });
+
+      expect(result.totalJobs).toBe(1);
+      expect(result.successfulJobs).toBe(0);
+      expect(result.failedJobs).toBe(1);
+      expect(fs.readdirSync(dryRunOutputDir)).toHaveLength(0);
+    });
+
     it('should not create files in dry run mode', async () => {
       // Bruk en unik output-mappe for denne testen
       const dryRunOutputDir = path.join(__dirname, '..', 'test-temp', 'dry-run-output');
@@ -184,6 +210,29 @@ describe('Converter Integration Tests', () => {
       expect(outputFiles.length).toBe(0);
     });
   });
+
+  describe('Normal Mode', () => {
+    it('continues to execute recognized format pairs without an adapter', async () => {
+      const inputFile = path.join(testInputDir, 'unsupported-pair.jpg');
+
+      await sharp({
+        create: { width: 1, height: 1, channels: 3, background: { r: 255, g: 0, b: 0 } },
+      }).jpeg().toFile(inputFile);
+
+      const result = await converter.convert({
+        input: inputFile,
+        output: testOutputDir,
+        format: 'pdf',
+        retries: 0,
+        quiet: true,
+      });
+
+      expect(result.totalJobs).toBe(1);
+      expect(result.successfulJobs).toBe(0);
+      expect(result.failedJobs).toBe(1);
+    });
+  });
+
   describe('Job Log Reports', () => {
     it('writes requested JSON and text reports after a completed conversion', async () => {
       const jsonPath = path.join(testOutputDir, 'reports', 'jobs.json');

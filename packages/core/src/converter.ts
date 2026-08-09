@@ -5,6 +5,7 @@ import { ConversionPlan, ConversionOptions, ConversionResult, JobLogReportOption
 import { JobQueue } from './job-queue';
 import { ProgressTracker } from './progress';
 import { ConversionParameters } from './adapters/base-adapter';
+import { AdapterManager } from './adapters/adapter-manager';
 import { ConfigManager } from './config/config-manager';
 import { validatePath } from './path-security';
 import logger from './logger';
@@ -55,7 +56,16 @@ export class Converter {
       }
       
       // Scan for files and create conversion plan
-      const plans = await scanForFiles(input, resolvedOutput, format, recursive);
+      const dryRunAdapterManager = dryRun ? new AdapterManager() : undefined;
+      const plans = await scanForFiles(
+        input,
+        resolvedOutput,
+        format,
+        recursive,
+        dryRunAdapterManager
+          ? (inputFormat, outputFormat) => dryRunAdapterManager.getAdapter(inputFormat, outputFormat) !== null
+          : undefined
+      );
 
       if (outputFile) {
         if (plans.length !== 1) {
