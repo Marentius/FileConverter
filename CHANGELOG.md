@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.1](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.6.0...fileconverter-v1.6.1) (2026-08-09)
+
+
+### Bug Fixes
+
+* limit adapter validation to dry runs ([0336115](https://github.com/Marentius/FileConverter/commit/03361158fcd8aacaf6deb552999afdfa43cc9b88))
+* validate dry-run conversions with adapters ([1fbf2b3](https://github.com/Marentius/FileConverter/commit/1fbf2b375826d85e21fae2a951fb4c104e7be6d0))
+
 ## [1.6.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.5.3...fileconverter-v1.6.0) (2026-07-30)
 
 
