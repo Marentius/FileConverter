@@ -8,11 +8,11 @@
         "build": "tsc && vite build",
         "preview": "vite preview",
         "tauri": "tauri",
-        "test": "echo \"No tests specified for GUI package\" && exit 0"
+        "test": "tsc --noEmit"
     },
     "dependencies": {
-        "@fileconverter/core": "file:../core",
         "@tauri-apps/api": "^2.10.1",
+        "@tauri-apps/plugin-dialog": "^2",
         "lucide-react": "^0.577.0",
         "react": "^19.2.4",
         "react-dom": "^19.2.4"
