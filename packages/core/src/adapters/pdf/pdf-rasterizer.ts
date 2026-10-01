@@ -202,7 +202,7 @@ export async function rasterizePdfToImages(options: RasterizeOptions): Promise<R
       data,
       disableFontFace: true,
       isEvalSupported: false,
-      useSystemFonts: true,
+      useSystemFonts: false,
       // Local buffer only — no network fetches for fonts/streams
       disableAutoFetch: true,
       disableStream: true,
