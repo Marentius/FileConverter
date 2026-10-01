@@ -9,7 +9,7 @@ import {
   resolveDpi,
 } from '../../src/adapters/pdf/pdf-rasterizer';
 import { PdfAdapter } from '../../src/adapters/pdf/pdf-adapter';
-import { getTestFilePath, cleanupAllTestFiles } from '../setup';
+import { getTestFilePath } from '../setup';
 import { PDFDocument } from 'pdf-lib';
 import fs from 'fs';
 import path from 'path';
@@ -106,10 +106,18 @@ describe('pdf-rasterizer fail-closed guards', () => {
 describe('PdfAdapter PDF → image routing', () => {
   let adapter: PdfAdapter;
   let inputPath: string;
+  /** Only delete files this suite created — never wipe shared test-temp (races coverage/integration). */
+  const ownedPaths: string[] = [];
+
+  const own = (filePath: string): string => {
+    ownedPaths.push(filePath);
+    return filePath;
+  };
 
   beforeEach(async () => {
     adapter = new PdfAdapter();
-    inputPath = getTestFilePath('raster-sample.pdf');
+    ownedPaths.length = 0;
+    inputPath = own(getTestFilePath('pdf-raster-sample.pdf'));
     const doc = await PDFDocument.create();
     doc.addPage([200, 200]);
     const bytes = await doc.save();
@@ -117,7 +125,14 @@ describe('PdfAdapter PDF → image routing', () => {
   });
 
   afterEach(() => {
-    cleanupAllTestFiles();
+    for (const filePath of ownedPaths) {
+      try {
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      } catch {
+        // ignore locked/missing
+      }
+    }
+    ownedPaths.length = 0;
   });
 
   it('advertises png/jpg/webp outputs', () => {
@@ -132,7 +147,7 @@ describe('PdfAdapter PDF → image routing', () => {
   });
 
   it('fail-closes convert when DPI is over 300', async () => {
-    const outputPath = getTestFilePath('out.png');
+    const outputPath = own(getTestFilePath('pdf-raster-out.png'));
     const result = await adapter.convert(
       {
         inputPath,
@@ -150,14 +165,14 @@ describe('PdfAdapter PDF → image routing', () => {
 
   it('fail-closes convert when selected page count exceeds the job cap', async () => {
     // Build a PDF with more pages than the cap
-    const manyPath = getTestFilePath('many-pages.pdf');
+    const manyPath = own(getTestFilePath('pdf-raster-many-pages.pdf'));
     const doc = await PDFDocument.create();
     for (let i = 0; i < MAX_PAGES_PER_JOB + 5; i++) {
       doc.addPage([100, 100]);
     }
     fs.writeFileSync(manyPath, await doc.save());
 
-    const outputPath = getTestFilePath('many-out.png');
+    const outputPath = own(getTestFilePath('pdf-raster-many-out.png'));
     const result = await adapter.convert(
       {
         inputPath: manyPath,
@@ -173,7 +188,7 @@ describe('PdfAdapter PDF → image routing', () => {
   }, 60000);
 
   it('rasterizes a small PDF to PNG at safe DPI', async () => {
-    const outputPath = getTestFilePath('ok.png');
+    const outputPath = own(getTestFilePath('pdf-raster-ok.png'));
     const result = await adapter.convert(
       {
         inputPath,
