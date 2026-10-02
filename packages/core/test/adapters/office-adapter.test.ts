@@ -272,6 +272,32 @@ describe('OfficeAdapter', () => {
         const content = fs.readFileSync(outputPath, 'utf-8');
         expect(content).toContain('Test Document');
       });
+
+      it('should sanitize HTML output to prevent XSS attacks', async () => {
+        const maliciousDocx = await createMaliciousDocx(getTestFilePath('malicious.docx'));
+        const outputPath = getTestFilePath('sanitized-output.html');
+        const plan = {
+          inputPath: maliciousDocx,
+          outputPath,
+          inputFormat: 'docx',
+          outputFormat: 'html',
+          supported: true,
+        };
+
+        const result = await adapter.convert(plan, {});
+
+        expect(result.success).toBe(true);
+        expect(fs.existsSync(outputPath)).toBe(true);
+        const content = fs.readFileSync(outputPath, 'utf-8');
+        
+        expect(content).not.toContain('<script');
+        expect(content).not.toContain('onclick');
+        expect(content).not.toContain('javascript:');
+        expect(content).not.toContain('<iframe');
+        expect(content).not.toContain('<object');
+        expect(content).not.toContain('<embed');
+        expect(content).toContain('Safe Content');
+      });
     });
 
     describe('XLSX conversion', () => {
@@ -514,5 +540,43 @@ This is a test RTF document.\par
   }
 
   fs.writeFileSync(outputPath, rtfContent);
+  return outputPath;
+}
+
+/**
+ * Creates a DOCX file for testing HTML sanitization.
+ * The document contains content that tests the sanitizer's ability to handle
+ * safe content while ensuring dangerous elements would be stripped.
+ */
+async function createMaliciousDocx(outputPath: string): Promise<string> {
+  const JSZip = (await import('jszip')).default;
+  const zip = new JSZip();
+
+  zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`);
+
+  zip.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+
+  zip.file('word/document.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p><w:r><w:t>Safe Content</w:t></w:r></w:p>
+  </w:body>
+</w:document>`);
+
+  const dir = path.dirname(outputPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  const buffer = await zip.generateAsync({ type: 'nodebuffer' });
+  fs.writeFileSync(outputPath, buffer);
   return outputPath;
 }
