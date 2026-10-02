@@ -2,6 +2,19 @@ import { OfficeAdapter } from '../../src/adapters/office/office-adapter';
 import { getTestFilePath } from '../setup';
 import fs from 'fs';
 import path from 'path';
+import mammoth from 'mammoth';
+
+vi.mock('mammoth', async () => {
+  const actual = await vi.importActual<typeof mammoth>('mammoth');
+  return {
+    ...actual,
+    default: {
+      ...actual.default,
+      convertToHtml: vi.fn(actual.default.convertToHtml),
+      images: actual.default.images,
+    },
+  };
+});
 
 describe('OfficeAdapter', () => {
   let adapter: OfficeAdapter;
@@ -274,10 +287,19 @@ describe('OfficeAdapter', () => {
       });
 
       it('should sanitize HTML output to prevent XSS attacks', async () => {
-        const maliciousDocx = await createMaliciousDocx(getTestFilePath('malicious.docx'));
+        const testDocx = await createMinimalDocx(getTestFilePath('xss-test.docx'));
         const outputPath = getTestFilePath('sanitized-output.html');
+        
+        const dirtyHtml = '<p>Safe Content</p><script>alert("xss")</script><p onclick="alert(1)">Click</p><a href="javascript:void(0)">Link</a><iframe src="evil.com"></iframe><object data="evil.swf"></object><embed src="evil.swf">';
+        
+        const mockMammoth = await import('mammoth');
+        vi.mocked(mockMammoth.default.convertToHtml).mockResolvedValueOnce({
+          value: dirtyHtml,
+          messages: [],
+        });
+
         const plan = {
-          inputPath: maliciousDocx,
+          inputPath: testDocx,
           outputPath,
           inputFormat: 'docx',
           outputFormat: 'html',
@@ -291,6 +313,7 @@ describe('OfficeAdapter', () => {
         const content = fs.readFileSync(outputPath, 'utf-8');
         
         expect(content).not.toContain('<script');
+        expect(content).not.toContain('alert');
         expect(content).not.toContain('onclick');
         expect(content).not.toContain('javascript:');
         expect(content).not.toContain('<iframe');
@@ -540,43 +563,5 @@ This is a test RTF document.\par
   }
 
   fs.writeFileSync(outputPath, rtfContent);
-  return outputPath;
-}
-
-/**
- * Creates a DOCX file for testing HTML sanitization.
- * The document contains content that tests the sanitizer's ability to handle
- * safe content while ensuring dangerous elements would be stripped.
- */
-async function createMaliciousDocx(outputPath: string): Promise<string> {
-  const JSZip = (await import('jszip')).default;
-  const zip = new JSZip();
-
-  zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
-  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
-</Types>`);
-
-  zip.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
-</Relationships>`);
-
-  zip.file('word/document.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-  <w:body>
-    <w:p><w:r><w:t>Safe Content</w:t></w:r></w:p>
-  </w:body>
-</w:document>`);
-
-  const dir = path.dirname(outputPath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  const buffer = await zip.generateAsync({ type: 'nodebuffer' });
-  fs.writeFileSync(outputPath, buffer);
   return outputPath;
 }
