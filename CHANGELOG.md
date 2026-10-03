@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.8.2](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.8.1...fileconverter-v1.8.2) (2026-10-02)
+
+
+### Bug Fixes
+
+* **ci:** run CLI tarball npm ci inside release dir ([bb13daa](https://github.com/Marentius/FileConverter/commit/bb13daa228dc314728681f65d9c32997f3bdc497))
+
+## [1.8.1](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.8.0...fileconverter-v1.8.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **ci:** lockfile-backed CLI tarball install in release ([#111](https://github.com/Marentius/FileConverter/issues/111)) ([290ad6d](https://github.com/Marentius/FileConverter/commit/290ad6daa3d1a28e6762836a9f7559e1beca37dd))
+
+## [1.8.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.7.0...fileconverter-v1.8.0) (2026-10-02)
+
+
+### Features
+
+* **core:** PDF→image rasterize with fail-closed DoS caps ([#14](https://github.com/Marentius/FileConverter/issues/14)) ([6ef053f](https://github.com/Marentius/FileConverter/commit/6ef053fddf48ac6b0ffaede187cbd061d39cdd42))
+
+
+### Bug Fixes
+
+* **core:** sanitize Office→HTML output (parity with PDF) ([#105](https://github.com/Marentius/FileConverter/issues/105)) ([a68cf3a](https://github.com/Marentius/FileConverter/commit/a68cf3ad1a7bf4abd406229bd1ca012b171086e6))
+* **release:** package core outside npm workspace ([2f9b4ed](https://github.com/Marentius/FileConverter/commit/2f9b4ed7981f48277de9e7b9e2b492ea55d6a672))
+
 ## [1.7.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.6.1...fileconverter-v1.7.0) (2026-09-26)
 
 

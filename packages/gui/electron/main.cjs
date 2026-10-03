@@ -3,9 +3,19 @@ const { fork } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
+const {
+  PathAllowlist,
+  assertAllowedExistingPath,
+  assertSafeAbsolutePath,
+} = require("./path-allowlist.cjs");
+const { validateRequest } = require("./request-validation.cjs");
+const pathAllowlist = new PathAllowlist();
+const saveDestinations = new Set();
 let mainWindow;
 
 function createWindow() {
+  pathAllowlist.clear();
+  saveDestinations.clear();
   mainWindow = new BrowserWindow({
     title: "FileConverter",
     width: 1000,
@@ -20,6 +30,11 @@ function createWindow() {
     },
   });
 
+  mainWindow.on("closed", () => {
+    pathAllowlist.clear();
+    saveDestinations.clear();
+    mainWindow = null;
+  });
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   mainWindow.webContents.on("will-navigate", (event) => event.preventDefault());
 
@@ -95,25 +110,37 @@ app.whenReady().then(() => {
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ["openFile", "multiSelections"],
     });
-    return result.canceled ? [] : result.filePaths;
+    if (result.canceled) return [];
+    pathAllowlist.remember(result.filePaths);
+    return result.filePaths;
   });
   ipcMain.handle("folder:select", async (event) => {
     fromMainWindow(event);
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ["openDirectory"],
     });
-    return result.canceled ? null : result.filePaths[0];
+    if (result.canceled) return null;
+    pathAllowlist.remember(result.filePaths);
+    return result.filePaths[0];
   });
   ipcMain.handle(
     "files:convert",
     async (event, inputPaths, outputDir, format, options = {}) => {
       fromMainWindow(event);
-      return requestWorker("convert", {
-        inputPaths,
-        outputDir,
-        format,
-        options,
-      });
+      return requestWorker(
+        "convert",
+        validateRequest(
+          "convert",
+          {
+            inputPaths,
+            outputDir,
+            format,
+            options,
+          },
+          pathAllowlist,
+          saveDestinations,
+        ),
+      );
     },
   );
   ipcMain.handle("worker:request", async (event, action, payload = {}) => {
@@ -129,7 +156,10 @@ app.whenReady().then(() => {
       ].includes(action)
     )
       throw new Error("Unknown request.");
-    const result = await requestWorker(action, payload);
+    const result = await requestWorker(
+      action,
+      validateRequest(action, payload, pathAllowlist, saveDestinations),
+    );
     if (action === "info")
       return {
         ...result,
@@ -151,11 +181,18 @@ app.whenReady().then(() => {
     const result = await dialog.showSaveDialog(mainWindow, {
       filters: [{ name: format.toUpperCase(), extensions: [format] }],
     });
-    return result.canceled
-      ? null
-      : require("node:path").extname(result.filePath)
+    if (result.canceled) return null;
+    const destination =
+      path.extname(result.filePath).toLowerCase() === `.${format}`
         ? result.filePath
         : `${result.filePath}.${format}`;
+    const safe = assertSafeAbsolutePath(destination);
+    const canonical = path.join(
+      fs.realpathSync(path.dirname(safe)),
+      path.basename(safe),
+    );
+    saveDestinations.add(canonical);
+    return canonical;
   });
   ipcMain.handle("report:export", async (event, kind, report) => {
     fromMainWindow(event);
@@ -207,15 +244,17 @@ app.whenReady().then(() => {
   });
   ipcMain.handle("folder:open", async (event, folderPath) => {
     fromMainWindow(event);
+    const safe = assertSafeAbsolutePath(folderPath);
+    const realFolder = fs.realpathSync(safe);
     if (
-      typeof folderPath !== "string" ||
-      !path.isAbsolute(folderPath) ||
-      !fs.existsSync(folderPath) ||
-      !fs.statSync(folderPath).isDirectory()
-    ) {
+      ![...saveDestinations].some(
+        (destination) => path.dirname(destination) === realFolder,
+      )
+    )
+      assertAllowedExistingPath(realFolder, pathAllowlist);
+    if (!fs.statSync(realFolder).isDirectory())
       throw new Error("The output folder does not exist.");
-    }
-    const error = await shell.openPath(folderPath);
+    const error = await shell.openPath(realFolder);
     if (error) throw new Error(error);
   });
 

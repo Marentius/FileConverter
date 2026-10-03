@@ -120,7 +120,7 @@ export class Converter {
     const configManager = options.projectDirectory
       ? ConfigManager.forProject(options.projectDirectory, options.includeLocalConfig !== false) : ConfigManager.getInstance();
     const config = await configManager.loadConfig();
-    const keys = ['quality', 'maxWidth', 'maxHeight', 'stripMetadata', 'operation', 'inputFiles', 'pages', 'language'] as const;
+    const keys = ['quality', 'maxWidth', 'maxHeight', 'stripMetadata', 'operation', 'inputFiles', 'pages', 'language', 'dpi'] as const;
     const explicit = Object.fromEntries(keys.filter(key => options[key] !== undefined).map(key => [key, options[key]]));
     const preset = options.preset ? await configManager.getPreset(options.preset, options.presetScope) : undefined;
     if (options.preset && !preset) throw new Error(`Preset not found: ${options.preset}`);
