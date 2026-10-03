@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { affected } from "../scripts/ci-changes.mjs";
+import { selectRun } from "../scripts/release-ci.mjs";
 import { verify } from "../scripts/artifacts.mjs";
 test("GUI changes do not run CLI jobs, engine changes also validate its GUI consumer", () => {
   assert.deepEqual(affected(["packages/gui/src/App.tsx"]), {
@@ -17,6 +18,11 @@ test("GUI changes do not run CLI jobs, engine changes also validate its GUI cons
   });
   assert.deepEqual(affected(["package-lock.json"]), { core: true, gui: true });
   assert.deepEqual(affected(["README.md"]), { core: false, gui: false });
+  assert.deepEqual(affected(["packages/gui/README.md"]), {
+    core: false,
+    gui: false,
+  });
+  assert.deepEqual(affected([".npmrc"]), { core: true, gui: true });
   assert.deepEqual(affected([".release-please-manifest.json"]), {
     core: true,
     gui: true,
@@ -64,4 +70,26 @@ test("promotion rejects wrong commit/version/product, tampering, and unrecorded 
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
+});
+
+test("publication follows the tag commit CI even when main has advanced", () => {
+  const sha = "a".repeat(40);
+  const success = {
+    databaseId: 1,
+    headSha: sha,
+    event: "push",
+    headBranch: "main",
+    status: "completed",
+    conclusion: "success",
+  };
+  const newer = { ...success, databaseId: 2, headSha: "b".repeat(40) };
+  assert.equal(selectRun([newer, success], sha).databaseId, 1);
+  const live = { ...success, status: "in_progress", conclusion: "" };
+  assert.equal(selectRun([newer, live], sha).databaseId, 1);
+  assert.throws(() => selectRun([newer], sha));
+  assert.throws(() => selectRun([{ ...success, conclusion: "failure" }], sha));
+  assert.throws(() => selectRun([{ ...success, event: "pull_request" }], sha));
+  assert.throws(() =>
+    selectRun([{ ...success, headBranch: "untrusted" }], sha),
+  );
 });

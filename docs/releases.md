@@ -42,7 +42,7 @@ Both products start the independent scheme at their already published `1.8.2` ba
 - GUI-only changes: desktop tests/packages on the three supported platforms.
 - Shared lockfile, tooling, release configuration, or workflow changes: validate both products.
 - Documentation-only changes: automation/aggregate checks, without expensive product rebuilds.
-- Superseded PR runs are cancelled. Main CI and in-flight publication are not cancelled.
+- Superseded PR runs are cancelled. Each main commit has its own concurrency group, so later pushes do not replace its queued CI run. In-flight publication is not cancelled.
 
 The root lockfile is used by production staging with `npm ci`. Native packages are installed on the target platform. CLI staging executes `--version` before archiving, and the Linux job additionally creates the exact npm tarball. Every artifact records its product/version, embedded core version, platform, source SHA, and SHA-256 checksums. Downloads remain available as CI artifacts for 14 days.
 
@@ -54,7 +54,7 @@ After a checked release PR is merged:
 
 1. Main CI builds the release commit and uploads its verified artifacts.
 2. release-please creates product-specific draft releases and tags.
-3. Each product downloads artifacts from that **exact CI run**, verifies all three platforms, hashes, package versions, and the tag's commit against the CI SHA.
+3. Each product downloads artifacts from a successful main CI run for that **exact tagged commit**, verifies all three platforms, hashes, package versions, and the tag's commit against the CI SHA. If main has advanced, it locates (and, when necessary, waits for) the tagged commit’s CI rather than using an unrelated later CI completion.
 4. CLI publication uploads its archives and publishes the verified `.tgz` using npm OIDC/provenance. An already published version is accepted only if its integrity matches, enabling safe retry after partial success.
 5. Desktop publication uploads its three ZIPs independently. It never needs npm publication to finish first.
 6. A product's draft is published only after its required uploads/publication succeed. Desktop releases are marked GitHub's latest; CLI releases remain separately discoverable.

@@ -63,14 +63,19 @@ jobs:
         with:
           node-version: "22"
           registry-url: https://registry.npmjs.org
+      - name: Find successful CI for the release tag's exact commit
+        id: ci
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/release-ci.mjs
       - name: Download the tested CLI artifacts
         env:
           GH_TOKEN: ${{ github.token }}
-          CI_RUN: ${{ github.event.workflow_run.id }}
+          CI_RUN: ${{ steps.ci.outputs.run }}
         run: gh run download "$CI_RUN" --repo "$GITHUB_REPOSITORY" --pattern 'cli-*' --dir artifacts
       - name: Verify all platforms, versions, source commit, and checksums
         env:
-          CI_SHA: ${{ github.event.workflow_run.head_sha }}
+          CI_SHA: ${{ steps.ci.outputs.sha }}
           RELEASE_TAG: ${{ needs.release-please.outputs.cli_tag }}
         run: node scripts/artifacts.mjs verify-release cli artifacts
       - name: Upload tested CLI downloads
@@ -100,14 +105,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.release-please.outputs.gui_tag }}
+      - name: Find successful CI for the release tag's exact commit
+        id: ci
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/release-ci.mjs
       - name: Download the tested desktop ZIPs
         env:
           GH_TOKEN: ${{ github.token }}
-          CI_RUN: ${{ github.event.workflow_run.id }}
+          CI_RUN: ${{ steps.ci.outputs.run }}
         run: gh run download "$CI_RUN" --repo "$GITHUB_REPOSITORY" --pattern 'gui-*' --dir artifacts
       - name: Verify all platforms, versions, source commit, and checksums
         env:
-          CI_SHA: ${{ github.event.workflow_run.head_sha }}
+          CI_SHA: ${{ steps.ci.outputs.sha }}
           RELEASE_TAG: ${{ needs.release-please.outputs.gui_tag }}
         run: node scripts/artifacts.mjs verify-release gui artifacts
       - name: Upload tested desktop ZIPs

@@ -5,6 +5,14 @@ export function affected(files) {
   let core = false,
     gui = false;
   for (const file of files) {
+    if (
+      file.endsWith(".md") ||
+      file.startsWith("docs/") ||
+      file.startsWith("packages/gui/docs/") ||
+      file.startsWith(".github/ISSUE_TEMPLATE/") ||
+      ["LICENSE", ".gitignore"].includes(file)
+    )
+      continue;
     if (file.startsWith("packages/core/")) core = true;
     else if (file.startsWith("packages/gui/")) gui = true;
     else if (
@@ -17,6 +25,7 @@ export function affected(files) {
       file === ".release-please-manifest.json"
     )
       core = gui = true;
+    else core = gui = true;
   }
   return { core, gui: core || gui };
 }
@@ -33,9 +42,13 @@ if (
   let result = { core: true, gui: true };
   if (valid.test(base || "") && valid.test(head || "") && !/^0+$/.test(base)) {
     const args = event.pull_request ? [`${base}...${head}`] : [base, head];
-    const files = execFileSync("git", ["diff", "--name-only", "-z", ...args], {
-      encoding: "utf8",
-    })
+    const files = execFileSync(
+      "git",
+      ["diff", "--no-renames", "--name-only", "-z", ...args],
+      {
+        encoding: "utf8",
+      },
+    )
       .split("\0")
       .filter(Boolean);
     result = affected(files);

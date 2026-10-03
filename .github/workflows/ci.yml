@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -56,6 +56,7 @@ jobs:
           name: core-coverage-report
           path: packages/core/coverage/
           retention-days: 14
+          overwrite: true
           if-no-files-found: error
 
   cli-package:
@@ -89,6 +90,7 @@ jobs:
           name: cli-${{ matrix.platform }}
           path: artifacts/cli-${{ matrix.platform }}/
           retention-days: 14
+          overwrite: true
           if-no-files-found: error
 
   gui-package:
@@ -121,6 +123,7 @@ jobs:
           name: gui-${{ matrix.platform }}
           path: artifacts/gui-${{ matrix.platform }}/
           retention-days: 14
+          overwrite: true
           if-no-files-found: error
 
   ci:
