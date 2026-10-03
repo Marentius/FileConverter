@@ -7,6 +7,9 @@ import { validatePath } from '../../path-security';
 import logger from '../../logger';
 import {
   isRasterImageFormat,
+  buildPageOutputPath,
+  assertPageBudget,
+  assertBitmapBudget,
   rasterizePdfToImages,
   resolveDpi,
 } from './pdf-rasterizer';
@@ -210,6 +213,21 @@ export class PdfAdapter extends BaseAdapter {
   /**
    * Parse page range strings like "1-3,5,7-9" into 0-based indices.
    */
+  async planRasterOutputs(plan: ConversionPlan, parameters: ConversionParameters): Promise<string[]> {
+    this.validateInputFileSize(plan.inputPath);
+    const pdf = await PDFDocument.load(fs.readFileSync(plan.inputPath));
+    const indices = parameters.pages
+      ? [...new Set(this.parsePageRanges(parameters.pages, pdf.getPageCount()))].sort((a, b) => a - b)
+      : pdf.getPageIndices();
+    assertPageBudget(indices.length);
+    const dpi = resolveDpi(parameters.dpi);
+    for (const index of indices) {
+      const { width, height } = pdf.getPage(index).getSize();
+      assertBitmapBudget(width, height, dpi);
+    }
+    return indices.map(index => buildPageOutputPath(plan.outputPath, index + 1, indices.length));
+  }
+
   async validatePageSelection(inputPath: string, pages: string): Promise<void> {
     this.validateInputFileSize(inputPath);
     const pdf = await PDFDocument.load(fs.readFileSync(inputPath));

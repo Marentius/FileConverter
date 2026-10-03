@@ -38,7 +38,11 @@ test("preview is read-only, recursive scans skip output and symlinks, and collis
     await image(path.join(root, "a.png"));
     await image(path.join(nested, "a.png"));
     await image(path.join(output, "old.png"));
-    fs.symlinkSync(root, path.join(nested, "cycle"), "dir");
+    fs.symlinkSync(
+      root,
+      path.join(nested, "cycle"),
+      process.platform === "win32" ? "junction" : "dir",
+    );
     const shallow = await buildPlans([root], output, "jpg");
     assert.equal(shallow.length, 1);
     const recursive = await buildPlans([root], output, "jpg", {
@@ -396,4 +400,32 @@ test("filesystems without hard links use exclusive copies", () =>
     } finally {
       fs.linkSync = original;
     }
+  }));
+
+test("multi-page PDF rasterization previews and publishes every page without overwrites", () =>
+  fixture(async (root) => {
+    const pdf = await PDFDocument.create();
+    pdf.addPage([72, 72]);
+    pdf.addPage([144, 72]);
+    const input = path.join(root, "pages.pdf");
+    fs.writeFileSync(input, await pdf.save());
+    const output = path.join(root, "out");
+    const plans = await buildPlans([input], output, "png", { dpi: 72 });
+    assert.deepEqual(
+      plans[0].outputPaths.map((p) => path.basename(p)),
+      ["pages-page-1.png", "pages-page-2.png"],
+    );
+    const result = await convertFiles([input], output, "png", {
+      dpi: 72,
+      retries: 0,
+    });
+    assert.equal(result.success, true, result.jobs[0].error);
+    assert.equal(result.jobs[0].output_paths.length, 2);
+    assert.equal(
+      (await sharp(result.jobs[0].output_paths[1]).metadata()).width,
+      144,
+    );
+    const repeat = await buildPlans([input], output, "png");
+    assert.equal(repeat[0].supported, false);
+    assert.match(repeat[0].reason, /already exists/);
   }));

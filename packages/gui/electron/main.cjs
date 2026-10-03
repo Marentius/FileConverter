@@ -233,7 +233,9 @@ app.whenReady().then(() => {
         ...logs.flatMap((log) => [
           "",
           `Input: ${log.inputPath}`,
-          `Output: ${log.outputPath}`,
+          ...(log.outputPaths || [log.outputPath]).map(
+            (output) => `Output: ${output}`,
+          ),
           `Status: ${log.success ? "success" : "failed"}`,
           `Duration: ${log.duration}ms`,
           ...(log.error ? [`Error: ${log.error}`] : []),

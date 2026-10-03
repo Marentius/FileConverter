@@ -24,6 +24,7 @@ function validateOptions(options) {
   integer(options.maxHeight, "Maximum height");
   integer(options.concurrency, "Concurrency");
   integer(options.retries, "Retries", 0);
+  integer(options.dpi, "DPI", 72, 300);
   for (const key of ["recursive", "stripMetadata"]) {
     if (options[key] !== undefined && typeof options[key] !== "boolean")
       throw new Error(`Invalid ${key}.`);
@@ -156,6 +157,16 @@ async function buildPlans(inputPaths, outputDir, format, options = {}) {
     try {
       const adapter = adapters.getAdapter(plan.inputFormat, plan.outputFormat);
       adapter.validateParameters(parameters);
+      plan.outputPaths = [plan.outputPath];
+      if (
+        plan.inputFormat === "pdf" &&
+        ["png", "jpg", "jpeg", "webp"].includes(format)
+      ) {
+        plan.outputPaths = await new PdfAdapter().planRasterOutputs(
+          plan,
+          parameters,
+        );
+      }
       if (options.operation === "split")
         await new PdfAdapter().validatePageSelection(
           plan.inputPath,
@@ -173,18 +184,20 @@ async function buildPlans(inputPaths, outputDir, format, options = {}) {
       : p;
   for (const plan of plans) {
     if (!plan.supported || !plan.outputPath) continue;
-    const destination = key(path.resolve(plan.outputPath));
-    if (!destinations.has(destination)) destinations.set(destination, []);
-    destinations.get(destination).push(plan);
+    for (const outputPath of plan.outputPaths || [plan.outputPath]) {
+      const destination = key(path.resolve(outputPath));
+      if (!destinations.has(destination)) destinations.set(destination, []);
+      destinations.get(destination).push({ plan, outputPath });
+    }
   }
   for (const group of destinations.values()) {
-    for (const plan of group) {
-      if (group.length > 1 || fs.existsSync(plan.outputPath)) {
+    for (const { plan, outputPath } of group) {
+      if (group.length > 1 || fs.existsSync(outputPath)) {
         plan.supported = false;
         plan.reason =
           group.length > 1
-            ? `Multiple inputs would write to the same output: ${plan.outputPath}`
-            : `Output file already exists: ${plan.outputPath}`;
+            ? `Multiple inputs would write to the same output: ${outputPath}`
+            : `Output file already exists: ${outputPath}`;
       }
     }
   }
@@ -252,24 +265,43 @@ async function convertFiles(
     notify();
     const result = await queue.waitForCompletion();
     for (const job of result.jobs) {
-      const { plan } = staging.get(job.plan.outputPath);
+      const { plan, directory } = staging.get(job.plan.outputPath);
+      const outputPaths = plan.outputPaths || [plan.outputPath];
       let error = job.error;
       if (job.status === "success") {
         try {
-          // Publishing with a hard link is atomic and cannot overwrite an existing destination.
+          const published = [];
           try {
-            fs.linkSync(job.plan.outputPath, plan.outputPath);
+            for (const destination of outputPaths) {
+              const source = path.join(directory, path.basename(destination));
+              try {
+                fs.linkSync(source, destination);
+              } catch (cause) {
+                if (
+                  !["EPERM", "ENOSYS", "ENOTSUP", "EOPNOTSUPP"].includes(
+                    cause.code,
+                  )
+                )
+                  throw cause;
+                fs.copyFileSync(
+                  source,
+                  destination,
+                  fs.constants.COPYFILE_EXCL,
+                );
+              }
+              published.push({ destination, stat: fs.statSync(destination) });
+            }
           } catch (cause) {
-            // Some removable/network filesystems do not support hard links.
-            if (
-              !["EPERM", "ENOSYS", "ENOTSUP", "EOPNOTSUPP"].includes(cause.code)
-            )
-              throw cause;
-            fs.copyFileSync(
-              job.plan.outputPath,
-              plan.outputPath,
-              fs.constants.COPYFILE_EXCL,
-            );
+            for (const { destination, stat } of published) {
+              try {
+                const current = fs.lstatSync(destination);
+                if (current.ino === stat.ino && current.dev === stat.dev)
+                  fs.unlinkSync(destination);
+              } catch {
+                /* Preserve the original publication error. */
+              }
+            }
+            throw cause;
           }
         } catch (cause) {
           error = `Could not save output without overwriting: ${cause.message}`;
@@ -277,7 +309,8 @@ async function convertFiles(
       }
       jobs.push({
         input_path: plan.inputPath,
-        output_path: plan.outputPath,
+        output_path: outputPaths[0],
+        output_paths: outputPaths,
         status: job.status === "success" && !error ? "completed" : "failed",
         error,
         duration: job.duration,
@@ -287,7 +320,10 @@ async function convertFiles(
     logs = queue.getJobLogs().map((log) => ({
       ...log,
       outputPath:
-        staging.get(log.outputPath)?.plan.outputPath || log.outputPath,
+        staging.get(log.outputPath)?.plan.outputPaths?.[0] ||
+        staging.get(log.outputPath)?.plan.outputPath ||
+        log.outputPath,
+      outputPaths: staging.get(log.outputPath)?.plan.outputPaths,
     }));
     // Include validation and publication errors as final log entries as well.
     for (const job of jobs.filter((j) => j.status === "failed"))

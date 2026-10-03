@@ -12,12 +12,14 @@ interface ConversionOptions {
   presetScope?: "builtin" | "global" | "local";
   operation?: "merge" | "split" | "compress";
   pages?: string;
+  dpi?: number;
   outputFile?: string;
   projectDirectory?: string;
 }
 interface ConversionPlan {
   inputPath: string;
   outputPath: string;
+  outputPaths?: string[];
   inputFormat: string;
   outputFormat: string;
   supported: boolean;
@@ -33,6 +35,7 @@ interface ConversionResult {
   logs: Array<{
     inputPath: string;
     outputPath: string;
+    outputPaths?: string[];
     success: boolean;
     error?: string;
     duration?: number;
@@ -40,6 +43,7 @@ interface ConversionResult {
   jobs: Array<{
     input_path: string;
     output_path: string;
+    output_paths?: string[];
     status: "completed" | "failed";
     error?: string;
     duration?: number;

@@ -82,7 +82,13 @@ function App() {
     setOptions((current) => ({ ...current, [key]: value }));
   }
   function numberSetting(
-    key: "quality" | "maxWidth" | "maxHeight" | "concurrency" | "retries",
+    key:
+      | "quality"
+      | "maxWidth"
+      | "maxHeight"
+      | "concurrency"
+      | "retries"
+      | "dpi",
     label: string,
     min: number,
     max?: number,
@@ -455,6 +461,23 @@ function App() {
               {numberSetting("concurrency", "Parallel jobs", 1)}
               {numberSetting("retries", "Retry attempts", 0)}
             </div>
+            {mode === "convert" &&
+              inputs.some((input) => input.inputFormat === "pdf") &&
+              ["png", "jpg", "jpeg", "webp"].includes(format) && (
+                <>
+                  {numberSetting("dpi", "PDF resolution (DPI)", 72, 300)}
+                  <label>
+                    PDF pages
+                    <input
+                      placeholder="All pages, or 1-3,5"
+                      value={options.pages ?? ""}
+                      onChange={(e) =>
+                        update("pages", e.target.value || undefined)
+                      }
+                    />
+                  </label>
+                </>
+              )}
             {effectiveFormat === "txt" && (
               <>
                 <label>
@@ -533,7 +556,11 @@ function App() {
                   {plan.supported ? "Ready" : "Cannot convert"}:{" "}
                   {plan.inputPath}
                 </strong>
-                <div>→ {plan.outputPath}</div>
+                <div>
+                  {(plan.outputPaths || [plan.outputPath]).map((output) => (
+                    <div key={output}>→ {output}</div>
+                  ))}
+                </div>
                 {plan.reason && <p>{plan.reason}</p>}
               </div>
             ))}
@@ -550,7 +577,12 @@ function App() {
                 <strong>
                   {job.status}: {job.input_path}
                 </strong>
-                <div>{job.error || job.output_path}</div>
+                <div>
+                  {job.error ||
+                    (job.output_paths || [job.output_path]).map((output) => (
+                      <div key={output}>{output}</div>
+                    ))}
+                </div>
                 <small>
                   {job.duration ?? 0}ms · {job.retryCount ?? 0} retries
                 </small>
