@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -42,6 +43,22 @@ if (action === "make") {
     process.platform === "darwin"
       ? path.join(packaged, "FileConverter.app")
       : packaged;
+  // Distribution files are public application assets. A restrictive build umask
+  // must not make a system-installed DEB readable only by its root owner.
+  if (process.platform !== "win32") {
+    const normalize = (file) => {
+      const stat = fs.lstatSync(file);
+      if (stat.isSymbolicLink()) return;
+      fs.chmodSync(
+        file,
+        stat.isDirectory() || stat.mode & 0o111 ? 0o755 : 0o644,
+      );
+      if (stat.isDirectory())
+        for (const name of fs.readdirSync(file))
+          normalize(path.join(file, name));
+    };
+    normalize(app);
+  }
   const installer = spawnSync(
     process.execPath,
     [
