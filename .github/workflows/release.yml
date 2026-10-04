@@ -110,7 +110,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/release-ci.mjs
-      - name: Download the tested desktop ZIPs
+      - name: Download the tested desktop installers
         env:
           GH_TOKEN: ${{ github.token }}
           CI_RUN: ${{ steps.ci.outputs.run }}
