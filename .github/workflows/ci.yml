@@ -121,13 +121,17 @@ jobs:
         shell: pwsh
         run: |
           $installer = Get-Item packages/gui/out/installers/*-win-x64.exe
-          $process = Start-Process $installer.FullName -ArgumentList '/S' -PassThru -Wait
+          $process = Start-Process $installer.FullName -ArgumentList '/S' -PassThru
+          if (!$process.WaitForExit(120000)) { throw 'Installer timed out' }
+          $process.Refresh()
           if ($process.ExitCode -ne 0) { throw "Installer failed: $($process.ExitCode)" }
           $installed = Join-Path $env:LOCALAPPDATA 'Programs/fileconverter-desktop'
           if (!(Test-Path "$installed/FileConverter.exe")) { throw 'Installed executable missing' }
+          if (!(Test-Path "$installed/Uninstall FileConverter.exe")) { throw 'Uninstaller missing' }
           $shortcuts = Get-ChildItem "$env:APPDATA/Microsoft/Windows/Start Menu/Programs" -Filter 'FileConverter.lnk' -Recurse
           if (!$shortcuts) { throw 'Start menu shortcut missing' }
           node scripts/smoke-installed-desktop.mjs "$installed/resources/app"
+          node scripts/smoke-desktop-launch.mjs "$installed/FileConverter.exe"
       - name: Mount and test the macOS application
         if: runner.os == 'macOS'
         run: |
@@ -138,12 +142,14 @@ jobs:
           test -L "$mount/Applications"
           cp -R "$mount/FileConverter.app" "$RUNNER_TEMP/FileConverter.app"
           node scripts/smoke-installed-desktop.mjs "$RUNNER_TEMP/FileConverter.app/Contents/Resources/app"
+          node scripts/smoke-desktop-launch.mjs "$RUNNER_TEMP/FileConverter.app/Contents/MacOS/FileConverter"
       - name: Install and test the Linux application
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install -y ./packages/gui/out/installers/*.deb
           test -f /usr/share/applications/no.marentius.fileconverter.desktop
           node scripts/smoke-installed-desktop.mjs /opt/FileConverter/resources/app
+          xvfb-run -a node scripts/smoke-desktop-launch.mjs /opt/FileConverter/FileConverter
           mkdir -p "$RUNNER_TEMP/appimage"
           cd "$RUNNER_TEMP/appimage"
           "$GITHUB_WORKSPACE"/packages/gui/out/installers/*.AppImage --appimage-extract > /dev/null
