@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.10.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.9.0...fileconverter-v1.10.0) (2026-10-05)
+
+
+### Features
+
+* add open-source PDF to DOCX conversion ([10b9ca0](https://github.com/Marentius/FileConverter/commit/10b9ca00f73cced7e3847e46e852c3134da50f29))
+* derive CLI format matrix from registered adapters ([#173](https://github.com/Marentius/FileConverter/issues/173)) ([653962d](https://github.com/Marentius/FileConverter/commit/653962dc6c711768ad734aebe55e1ccf5df2a1e0))
+
+
+### Bug Fixes
+
+* report failed conversion jobs through CLI exit status ([#172](https://github.com/Marentius/FileConverter/issues/172)) ([f46dcd0](https://github.com/Marentius/FileConverter/commit/f46dcd09b525e7719a8540efda5d9297b524ac3c))
+* warn when animated image conversion drops frames ([#167](https://github.com/Marentius/FileConverter/issues/167)) ([5ccd973](https://github.com/Marentius/FileConverter/commit/5ccd973683575e030a9f1cde0892b5d44ba97104))
+
 ## [1.9.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.8.2...fileconverter-v1.9.0) (2026-10-03)
 
 
