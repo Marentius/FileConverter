@@ -123,6 +123,19 @@ converter pdf --split <file> --pages <range> -o <output>
 converter ocr -i <image> -o <output.txt> [--lang <language>]
 ```
 
+### `completion` — Shell completions
+
+```bash
+# bash (Linux)
+converter completion bash > ~/.local/share/bash-completion/completions/converter
+# zsh (with ~/.zfunc on $fpath before compinit)
+converter completion zsh > ~/.zfunc/_converter
+# fish
+converter completion fish > ~/.config/fish/completions/converter.fish
+```
+
+The script is generated from the CLI's command definitions. Regenerate it after upgrading. See the [main README](https://github.com/Marentius/FileConverter#shell-completions) for macOS and per-session setup.
+
 ## Presets
 
 | Preset | Quality | Max Size | Strip Metadata |
