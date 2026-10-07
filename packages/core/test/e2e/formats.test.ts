@@ -29,6 +29,9 @@ describe('CLI formats report', () => {
     expect(find('png', 'txt')).toMatchObject({ adapter: 'ocr', requiresOperation: false });
     expect(find('pdf', 'pdf')).toMatchObject({ adapter: 'pdf', requiresOperation: true });
     expect(find('png', 'png')).toMatchObject({ adapter: 'sharp', requiresOperation: false });
+    for (const input of ['png', 'jpg', 'webp', 'heic', 'svg']) {
+      expect(find(input, 'avif')).toMatchObject({ adapter: 'sharp', requiresOperation: false });
+    }
     for (const input of ['docx', 'xlsx', 'pptx', 'odt', 'rtf']) {
       for (const output of ['pdf', 'html', 'txt', 'md']) expect(find(input, output)?.adapter).toBe('office');
       expect(find(input, 'xlsx')).toBeUndefined();
