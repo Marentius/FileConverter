@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { affected } from "../scripts/ci-changes.mjs";
+import { releaseMetadataOnly } from "../scripts/release-metadata.mjs";
 import { selectRun } from "../scripts/release-ci.mjs";
 import { verify } from "../scripts/artifacts.mjs";
 import {
@@ -54,6 +55,160 @@ test("GUI changes do not run CLI jobs, engine changes also validate its GUI cons
     core: true,
     gui: true,
   });
+});
+
+function releaseFixture() {
+  const repo = { full_name: "Marentius/FileConverter" };
+  const event = {
+    repository: repo,
+    pull_request: {
+      head: { ref: "release-please--branches--main", repo },
+      base: { ref: "main" },
+    },
+  };
+  const metadata = (core, gui) => ({
+    "packages/core/package.json": {
+      name: "@fileconverter/core",
+      version: core,
+      scripts: { build: "tsup" },
+      dependencies: { sharp: "^0.35.5" },
+    },
+    "packages/gui/package.json": {
+      name: "@fileconverter/gui",
+      version: gui,
+      dependencies: { "@fileconverter/core": core, react: "^19.2.4" },
+    },
+    ".release-please-manifest.json": {
+      "packages/core": core,
+      "packages/gui": gui,
+    },
+    "package-lock.json": {
+      lockfileVersion: 3,
+      packages: {
+        "packages/core": { version: core },
+        "packages/gui": {
+          version: gui,
+          dependencies: { "@fileconverter/core": core, react: "^19.2.4" },
+        },
+        "node_modules/sharp": { version: "0.35.5", integrity: "sha512-tested" },
+      },
+    },
+  });
+  const before = metadata("1.10.0", "1.11.0");
+  const after = metadata("1.11.0", "1.11.1");
+  const files = [
+    ...Object.keys(after),
+    "packages/core/CHANGELOG.md",
+    "packages/gui/CHANGELOG.md",
+  ];
+  const classify = () =>
+    releaseMetadataOnly(
+      event,
+      files,
+      (file) => JSON.stringify(before[file]),
+      (file) => JSON.stringify(after[file]),
+    );
+  return { event, before, after, files, classify };
+}
+
+test("release-only PRs skip product jobs for independent and combined version bumps", () => {
+  const fixture = releaseFixture();
+  assert.equal(fixture.classify(), true);
+  fixture.after["packages/core/package.json"].version = "1.10.0";
+  fixture.after["packages/gui/package.json"].dependencies[
+    "@fileconverter/core"
+  ] = "1.10.0";
+  fixture.after[".release-please-manifest.json"]["packages/core"] = "1.10.0";
+  fixture.after["package-lock.json"].packages["packages/core"].version =
+    "1.10.0";
+  fixture.after["package-lock.json"].packages["packages/gui"].dependencies[
+    "@fileconverter/core"
+  ] = "1.10.0";
+  assert.equal(fixture.classify(), true);
+});
+
+test("ordinary PRs, fork PRs, main pushes, and manual runs retain product CI", () => {
+  const ordinary = releaseFixture();
+  ordinary.event.pull_request.head.ref = "fix/update-version";
+  assert.equal(ordinary.classify(), false);
+  const fork = releaseFixture();
+  fork.event.pull_request.head.repo = { full_name: "someone/FileConverter" };
+  assert.equal(fork.classify(), false);
+  const main = releaseFixture();
+  delete main.event.pull_request;
+  assert.equal(main.classify(), false);
+  assert.equal(
+    releaseMetadataOnly(
+      {},
+      [],
+      () => {},
+      () => {},
+    ),
+    false,
+  );
+  assert.deepEqual(affected(main.files), { core: true, gui: true });
+});
+
+test("release PRs with source, script, dependency, or lock integrity changes retain full CI", () => {
+  for (const file of [
+    "packages/core/src/cli.ts",
+    "package.json",
+    "scripts/package-cli.mjs",
+  ]) {
+    const fixture = releaseFixture();
+    fixture.files.push(file);
+    assert.equal(fixture.classify(), false);
+  }
+  for (const mutate of [
+    (f) => {
+      f.after["packages/core/package.json"].scripts.build = "other-command";
+    },
+    (f) => {
+      f.after["packages/core/package.json"].dependencies.sharp = "^0.36.0";
+    },
+    (f) => {
+      f.after["package-lock.json"].packages["node_modules/sharp"].version =
+        "0.36.0";
+    },
+    (f) => {
+      f.after["package-lock.json"].packages["node_modules/sharp"].integrity =
+        "sha512-other";
+    },
+  ]) {
+    const fixture = releaseFixture();
+    mutate(fixture);
+    assert.equal(fixture.classify(), false);
+  }
+});
+
+test("missing metadata and inconsistent release versions cannot skip product validation", () => {
+  for (const mutate of [
+    (f) => {
+      delete f.after["package-lock.json"];
+    },
+    (f) => {
+      f.after[".release-please-manifest.json"]["packages/gui"] = "9.0.0";
+    },
+    (f) => {
+      f.after["package-lock.json"].packages["packages/core"].version = "9.0.0";
+    },
+    (f) => {
+      f.after["packages/gui/package.json"].dependencies["@fileconverter/core"] =
+        "9.0.0";
+    },
+    (f) => {
+      f.after["package-lock.json"].packages["packages/gui"].dependencies[
+        "@fileconverter/core"
+      ] = "9.0.0";
+    },
+    (f) => {
+      f.after["packages/core/package.json"].version = "not-a-version";
+    },
+  ]) {
+    const fixture = releaseFixture();
+    mutate(fixture);
+    assert.equal(fixture.classify(), false);
+  }
 });
 test("promotion rejects wrong commit/version/product, tampering, and unrecorded files", () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "artifact-test-"));

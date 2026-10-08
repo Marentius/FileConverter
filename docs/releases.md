@@ -42,6 +42,7 @@ Both products start the independent scheme at their already published `1.8.2` ba
 - GUI-only changes: desktop tests/installers on the three supported platforms.
 - Shared lockfile, tooling, release configuration, or workflow changes: validate both products.
 - Documentation-only changes: automation/aggregate checks, without expensive product rebuilds.
+- Release-please PRs from this repository that only update package versions, the matching desktop core dependency, lockfile version fields, release manifest, and product changelogs: validate metadata consistency and run automation/aggregate checks without product builds or packaging. Any source, script, or other dependency change retains normal product CI. After merge, main CI still builds and tests the final release versions on all supported platforms; CD publishes those exact artifacts.
 - Superseded PR runs are cancelled. Each main commit has its own concurrency group, so later pushes do not replace its queued CI run. In-flight publication is not cancelled.
 
 The root lockfile is used by production staging with `npm ci`. Native packages are installed on the target platform. CLI staging executes `--version` before archiving, and the Linux job additionally creates the exact npm tarball. Desktop downloads are NSIS setup on Windows, DMG on macOS, and DEB/AppImage on Linux. CI verifies installation shortcuts/application-menu integration and runs native conversion through the worker from the installed or extracted application, not the checkout.
