@@ -20,6 +20,7 @@ jobs:
     outputs:
       core: ${{ steps.changes.outputs.core }}
       gui: ${{ steps.changes.outputs.gui }}
+      release_metadata: ${{ steps.changes.outputs.release_metadata }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,9 +28,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - id: changes
+      - name: Classify changes and validate release metadata
+        id: changes
         run: node scripts/ci-changes.mjs
-      - run: npm run test:automation
+      - name: Validate CI and release automation
+        run: npm run test:automation
 
   core:
     needs: changes
