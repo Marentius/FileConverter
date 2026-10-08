@@ -8,10 +8,83 @@ import { affected } from "../scripts/ci-changes.mjs";
 import { releaseMetadataOnly } from "../scripts/release-metadata.mjs";
 import { selectRun } from "../scripts/release-ci.mjs";
 import { verify } from "../scripts/artifacts.mjs";
+import { updateReleasePrBranch } from "../scripts/update-release-pr-branch.mjs";
 import {
   desktopFiles,
   verifyDesktopFiles,
 } from "../scripts/desktop-artifacts.mjs";
+
+test("release branch updater refreshes only a behind first-party release PR", async () => {
+  const calls = [];
+  const pr = {
+    number: 176,
+    mergeable_state: "behind",
+    head: {
+      ref: "release-please--branches--main",
+      sha: "release-head-sha",
+      repo: { full_name: "Marentius/FileConverter" },
+    },
+    base: { ref: "main" },
+  };
+  const fetchImpl = async (url, options = {}) => {
+    calls.push({ url, options });
+    return calls.length === 1
+      ? { ok: true, json: async () => [pr] }
+      : { ok: true };
+  };
+
+  assert.deepEqual(
+    await updateReleasePrBranch({
+      repository: "Marentius/FileConverter",
+      token: "token",
+      fetchImpl,
+    }),
+    { status: "update-requested", number: 176 },
+  );
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1].options.method, "PUT");
+  assert.deepEqual(JSON.parse(calls[1].options.body), {
+    expected_head_sha: "release-head-sha",
+  });
+});
+
+test("release branch updater skips absent, current, and fork release PRs", async () => {
+  const firstPartyPr = {
+    number: 176,
+    mergeable_state: "clean",
+    head: {
+      ref: "release-please--branches--main",
+      sha: "head-sha",
+      repo: { full_name: "Marentius/FileConverter" },
+    },
+    base: { ref: "main" },
+  };
+  for (const pullRequests of [
+    [],
+    [firstPartyPr],
+    [
+      {
+        ...firstPartyPr,
+        head: {
+          ...firstPartyPr.head,
+          repo: { full_name: "someone/FileConverter" },
+        },
+      },
+    ],
+  ]) {
+    let calls = 0;
+    const result = await updateReleasePrBranch({
+      repository: "Marentius/FileConverter",
+      token: "token",
+      fetchImpl: async () => {
+        calls += 1;
+        return { ok: true, json: async () => pullRequests };
+      },
+    });
+    assert.equal(calls, 1);
+    assert.notEqual(result.status, "update-requested");
+  }
+});
 
 test("desktop promotion requires the installers for each OS and rejects legacy archives", () => {
   for (const platform of ["linux-x64", "win-x64", "macos-arm64"]) {
