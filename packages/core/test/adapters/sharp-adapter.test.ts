@@ -33,6 +33,10 @@ describe('SharpAdapter', () => {
       expect(result).toBe(true);
     });
 
+    it.each(['png', 'jpg', 'webp', 'tiff', 'heic'])('should support %s to AVIF conversion', (input) => {
+      expect(adapter.canHandle(input, 'avif')).toBe(true);
+    });
+
     it('should support SVG to PNG conversion', () => {
       const result = adapter.canHandle('svg', 'png');
       expect(result).toBe(true);
@@ -116,6 +120,48 @@ describe('SharpAdapter', () => {
       expect(fs.statSync(pngOutputPath).size).toBeGreaterThan(0);
       expect(result.metadata?.format).toBe('png');
     }, 30000);
+
+    it('should convert PNG to a valid AVIF', async () => {
+      const avifOutputPath = getTestFilePath('sharp-test-output.avif');
+      const plan = {
+        inputPath: testInputPath,
+        outputPath: avifOutputPath,
+        inputFormat: 'png',
+        outputFormat: 'avif',
+        supported: true
+      };
+
+      const result = await adapter.convert(plan, { quality: 60 });
+
+      expect(result.success).toBe(true);
+      expect(result.metadata?.format).toBe('avif');
+      const metadata = await sharp(avifOutputPath).metadata();
+      expect(metadata.format).toBe('heif');
+      expect(metadata.compression).toBe('av1');
+      expect(metadata.width).toBe(1);
+    }, 30000);
+
+    it('should resize when converting to AVIF without a quality setting', async () => {
+      const largeInputPath = getTestFilePath('sharp-test-large.jpg');
+      const avifOutputPath = getTestFilePath('sharp-test-large.avif');
+      await sharp({
+        create: { width: 64, height: 32, channels: 3, background: { r: 0, g: 128, b: 255 } },
+      }).jpeg().toFile(largeInputPath);
+
+      const result = await adapter.convert({
+        inputPath: largeInputPath,
+        outputPath: avifOutputPath,
+        inputFormat: 'jpg',
+        outputFormat: 'avif',
+        supported: true
+      }, { maxWidth: 16 });
+
+      expect(result.success).toBe(true);
+      const metadata = await sharp(avifOutputPath).metadata();
+      expect(metadata.compression).toBe('av1');
+      expect(metadata.width).toBe(16);
+      expect(metadata.height).toBe(8);
+    }, 30000);
   });
 
   describe('supportedFormats', () => {
@@ -130,6 +176,7 @@ describe('SharpAdapter', () => {
       expect(adapter.supportedOutputFormats).toContain('png');
       expect(adapter.supportedOutputFormats).toContain('jpg');
       expect(adapter.supportedOutputFormats).toContain('webp');
+      expect(adapter.supportedOutputFormats).toContain('avif');
     });
   });
 
