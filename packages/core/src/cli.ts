@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { Command } from 'commander';
+import { Argument, Command, Option } from 'commander';
 import path from 'path';
 import { Converter } from './converter';
 import { ConversionOptions } from './types';
@@ -8,6 +8,7 @@ import { AdapterManager } from './adapters/adapter-manager';
 import { listPresets } from './presets/image-presets';
 import { ConfigManager } from './config/config-manager';
 import { parsePositiveInt, parseIntInRange } from './input-validation';
+import { COMPLETION_SHELLS, CompletionShell, generateCompletionScript } from './completions';
 import logger, { setConsoleLoggingEnabled } from './logger';
 import chalk from 'chalk';
 
@@ -325,6 +326,35 @@ program
     console.log(`Node.js: ${process.version}`);
     console.log(`Platform: ${process.platform} ${process.arch}`);
     console.log(`Working directory: ${process.cwd()}`);
+  });
+
+program
+  .command('completion')
+  .description('Print a shell completion script (bash, zsh or fish)')
+  .addArgument(new Argument('<shell>', 'Target shell').choices(COMPLETION_SHELLS))
+  .action(async (shell: CompletionShell) => {
+    try {
+      setConsoleLoggingEnabled(false);
+      const outputFormats = [...new Set(new AdapterManager().listAdapters().flatMap(a => a.supportedOutputFormats))].sort();
+      // Project-local presets depend on the working directory, so only stable preset names are baked in.
+      const presetNames = (await ConfigManager.getInstance().listPresets())
+        .filter(preset => preset.scope !== 'local')
+        .map(preset => preset.name);
+      const values = (_path: string[], option: Option): string[] | undefined => {
+        switch (option.long) {
+          case '--to': return outputFormats;
+          case '--preset': return presetNames;
+          case '--scope': return ['global', 'local'];
+          case '--type': return ['image', 'pdf', 'document'];
+          default: return undefined;
+        }
+      };
+      process.stdout.write(generateCompletionScript(shell, program, values));
+    } catch (error) {
+      logger.error('Completion CLI error', { error });
+      console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
   });
 
 process.on('uncaughtException', (error) => {

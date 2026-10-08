@@ -157,7 +157,31 @@ converter preset list      # List all presets (built-in + custom)
 converter preset create    # Create a custom preset
 converter preset delete    # Delete a custom preset
 converter version          # Show version and system info
+converter completion <shell>  # Print a bash, zsh or fish completion script
 ```
+
+### Shell completions
+
+`converter completion <bash|zsh|fish>` prints a completion script for subcommands, flags, `--to` formats, presets and PDF operations. The script is generated from the CLI's own command definitions, so it always matches the installed version. Regenerate it after upgrading or after adding global presets. Project-local presets are not included because they depend on the working directory.
+
+```bash
+# bash (Linux; needs the bash-completion package)
+mkdir -p ~/.local/share/bash-completion/completions
+converter completion bash > ~/.local/share/bash-completion/completions/converter
+
+# bash (macOS with Homebrew bash-completion@2)
+converter completion bash > "$(brew --prefix)/etc/bash_completion.d/converter"
+
+# zsh: put the script on $fpath before compinit runs in ~/.zshrc
+mkdir -p ~/.zfunc
+converter completion zsh > ~/.zfunc/_converter
+# then in ~/.zshrc: fpath=(~/.zfunc $fpath); autoload -Uz compinit; compinit
+
+# fish
+converter completion fish > ~/.config/fish/completions/converter.fish
+```
+
+You can also load completions for the current session only: `source <(converter completion bash)` in bash, or `source <(converter completion zsh)` in zsh after `compinit`. Open a new shell after installing.
 
 ## Presets
 
