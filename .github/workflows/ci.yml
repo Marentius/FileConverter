@@ -20,6 +20,8 @@ jobs:
     outputs:
       core: ${{ steps.changes.outputs.core }}
       gui: ${{ steps.changes.outputs.gui }}
+      cli_package: ${{ steps.changes.outputs.cli_package }}
+      gui_package: ${{ steps.changes.outputs.gui_package }}
       release_metadata: ${{ steps.changes.outputs.release_metadata }}
     steps:
       - uses: actions/checkout@v4
@@ -64,7 +66,7 @@ jobs:
 
   cli-package:
     needs: changes
-    if: needs.changes.outputs.core == 'true'
+    if: needs.changes.outputs.cli_package == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -96,9 +98,27 @@ jobs:
           overwrite: true
           if-no-files-found: error
 
+  gui-test:
+    needs: changes
+    if: needs.changes.outputs.gui == 'true' && needs.changes.outputs.gui_package != 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm test --workspace=@fileconverter/gui
+      - run: npm run build --workspace=@fileconverter/gui
+
   gui-package:
     needs: changes
-    if: needs.changes.outputs.gui == 'true'
+    if: needs.changes.outputs.gui_package == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -176,7 +196,7 @@ jobs:
 
   ci:
     name: CI
-    needs: [changes, core, cli-package, gui-package]
+    needs: [changes, core, gui-test, cli-package, gui-package]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -187,6 +207,12 @@ jobs:
           node -e '
             const jobs = JSON.parse(process.env.RESULTS);
             if (jobs.changes.result !== "success" || Object.values(jobs).some(j => !["success", "skipped"].includes(j.result))) process.exit(1);
-            const required = { core: jobs.changes.outputs.core, "cli-package": jobs.changes.outputs.core, "gui-package": jobs.changes.outputs.gui };
+            const outputs = jobs.changes.outputs;
+            const required = {
+              core: outputs.core,
+              "gui-test": outputs.gui === "true" && outputs.gui_package !== "true" ? "true" : "false",
+              "cli-package": outputs.cli_package,
+              "gui-package": outputs.gui_package
+            };
             if (Object.entries(required).some(([job, affected]) => affected === "true" && jobs[job].result !== "success")) process.exit(1);
           '

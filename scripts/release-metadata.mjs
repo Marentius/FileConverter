@@ -61,3 +61,16 @@ export function releaseMetadataOnly(event, files, readBefore, readAfter) {
     return false;
   }
 }
+
+export function releasedProducts(readBefore, readAfter) {
+  // Validate the final metadata even when a push includes source changes as
+  // well as a release merge. Publication needs packages for the final commit.
+  snapshot(readAfter);
+  const before = JSON.parse(readBefore(".release-please-manifest.json"));
+  const after = JSON.parse(readAfter(".release-please-manifest.json"));
+  const core = before[workspaces[0]] !== after[workspaces[0]];
+  return {
+    core,
+    gui: core || before[workspaces[1]] !== after[workspaces[1]],
+  };
+}

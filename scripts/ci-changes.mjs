@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
-import { releaseMetadataOnly } from "./release-metadata.mjs";
+import { releaseMetadataOnly, releasedProducts } from "./release-metadata.mjs";
 export function affected(files) {
   let core = false,
     gui = false;
@@ -30,6 +30,31 @@ export function affected(files) {
   }
   return { core, gui: core || gui };
 }
+
+export function ciPlan(eventName, event, files, readBefore, readAfter) {
+  const releaseMetadata = releaseMetadataOnly(
+    event,
+    files,
+    readBefore,
+    readAfter,
+  );
+  const products = releaseMetadata
+    ? { core: false, gui: false }
+    : affected(files);
+  let packages = products;
+  if (eventName === "push" && event.ref === "refs/heads/main") {
+    packages = files.includes(".release-please-manifest.json")
+      ? releasedProducts(readBefore, readAfter)
+      : { core: false, gui: false };
+  }
+  return {
+    ...products,
+    cli_package: packages.core,
+    gui_package: packages.gui,
+    release_metadata: releaseMetadata,
+  };
+}
+
 if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
@@ -40,7 +65,14 @@ if (
   const base = event.pull_request?.base.sha || event.before;
   const head = event.pull_request?.head.sha || process.env.GITHUB_SHA;
   const valid = /^[0-9a-f]{40}$/;
-  let result = { core: true, gui: true, release_metadata: false };
+  // If there is no usable diff (e.g. manual runs), validate and package both.
+  let result = {
+    core: true,
+    gui: true,
+    cli_package: true,
+    gui_package: true,
+    release_metadata: false,
+  };
   if (valid.test(base || "") && valid.test(head || "") && !/^0+$/.test(base)) {
     const args = event.pull_request ? [`${base}...${head}`] : [base, head];
     const files = execFileSync(
@@ -59,16 +91,13 @@ if (
       : base;
     const readAt = (sha) => (file) =>
       execFileSync("git", ["show", `${sha}:${file}`], { encoding: "utf8" });
-    const releaseMetadata = releaseMetadataOnly(
+    result = ciPlan(
+      process.env.GITHUB_EVENT_NAME,
       event,
       files,
       readAt(comparisonBase),
       readAt(head),
     );
-    result = {
-      ...(releaseMetadata ? { core: false, gui: false } : affected(files)),
-      release_metadata: releaseMetadata,
-    };
   }
   const lines =
     Object.entries(result)
