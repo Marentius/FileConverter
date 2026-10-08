@@ -8,7 +8,7 @@ import logger from '../../logger';
 export class SharpAdapter extends BaseAdapter {
   readonly name = 'sharp';
   readonly supportedInputFormats = ['heic', 'jpg', 'jpeg', 'png', 'webp', 'tiff', 'bmp', 'gif', 'svg'];
-  readonly supportedOutputFormats = ['jpg', 'jpeg', 'png', 'webp', 'tiff'];
+  readonly supportedOutputFormats = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'tiff'];
 
   async convert(
     plan: ConversionPlan,
@@ -78,6 +78,14 @@ export class SharpAdapter extends BaseAdapter {
           const webpQuality = typeof parameters.quality === 'number' && parameters.quality >= 1 && parameters.quality <= 100 ? parameters.quality : 85;
           outputBuffer = await sharpInstance
             .webp({ quality: webpQuality })
+            .toBuffer();
+          break;
+
+        case 'avif':
+          // AVIF reaches JPEG-like visual quality at much lower values, so default to Sharp's own 50.
+          const avifQuality = typeof parameters.quality === 'number' && parameters.quality >= 1 && parameters.quality <= 100 ? parameters.quality : 50;
+          outputBuffer = await sharpInstance
+            .avif({ quality: avifQuality })
             .toBuffer();
           break;
         
