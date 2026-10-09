@@ -38,11 +38,13 @@ Both products start the independent scheme at their already published `1.8.2` ba
 
 `CI` always runs a small changes/automation job and a stable aggregate `CI` check. Branch protection requires the aggregate check, so an intentionally skipped product is acceptable but a failed or cancelled affected product is not.
 
-- Core changes: lint, build, all unit/integration/E2E tests and coverage on Node 22 and 24; standalone CLI archives on Linux x64, Windows x64, and macOS arm64; desktop tests/installers on those three platforms because the app consumes core.
-- GUI-only changes: desktop tests/installers on the three supported platforms.
+- Core changes: lint, build, all unit/integration/E2E tests and coverage on Node 22 and 24; desktop tests on Linux x64, Windows x64, and macOS arm64 because the app consumes core.
+- GUI-only changes: desktop tests on the three supported platforms.
+- Ordinary PRs additionally build standalone CLI archives and desktop installers for affected products, including installation tests. Ordinary pushes to main build and test affected products without packaging; successful CI still triggers release-please.
 - Shared lockfile, tooling, release configuration, or workflow changes: validate both products.
 - Documentation-only changes: automation/aggregate checks, without expensive product rebuilds.
 - Release-please PRs from this repository that only update package versions, the matching desktop core dependency, lockfile version fields, release manifest, and product changelogs: validate metadata consistency and run automation/aggregate checks without product builds or packaging. Any source, script, or other dependency change retains normal product CI. After merge, main CI still builds and tests the final release versions on all supported platforms; CD publishes those exact artifacts.
+- A main push that changes product versions in the release manifest builds packages/installers and runs installation tests for the released products. GUI-only releases skip CLI packaging; core releases also package the desktop consumer. Detection uses the manifest version changes rather than commit titles, so squash merges and pushes containing both source changes and a release merge are supported. Invalid final release metadata fails CI. Manual runs validate and package both products.
 - Superseded PR runs are cancelled. Each main commit has its own concurrency group, so later pushes do not replace its queued CI run. In-flight publication is not cancelled.
 
 The root lockfile is used by production staging with `npm ci`. Native packages are installed on the target platform. CLI staging executes `--version` before archiving, and the Linux job additionally creates the exact npm tarball. Desktop downloads are NSIS setup on Windows, DMG on macOS, and DEB/AppImage on Linux. CI verifies installation shortcuts/application-menu integration and runs native conversion through the worker from the installed or extracted application, not the checkout.

@@ -4,7 +4,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
-import { affected } from "../scripts/ci-changes.mjs";
+import { spawnSync } from "node:child_process";
+import { affected, ciPlan } from "../scripts/ci-changes.mjs";
 import { releaseMetadataOnly } from "../scripts/release-metadata.mjs";
 import { selectRun } from "../scripts/release-ci.mjs";
 import { verify } from "../scripts/artifacts.mjs";
@@ -181,8 +182,154 @@ function releaseFixture() {
       (file) => JSON.stringify(before[file]),
       (file) => JSON.stringify(after[file]),
     );
-  return { event, before, after, files, classify };
+  const plan = (eventName) =>
+    ciPlan(
+      eventName,
+      event,
+      files,
+      (file) => JSON.stringify(before[file]),
+      (file) => JSON.stringify(after[file]),
+    );
+  return { event, before, after, files, classify, plan };
 }
+
+test("ordinary PRs package products; ordinary main pushes only build and test", () => {
+  const fixture = releaseFixture();
+  fixture.event.pull_request.head.ref = "feature/example";
+  fixture.files.splice(0, fixture.files.length, "packages/core/src/cli.ts");
+  assert.deepEqual(fixture.plan("pull_request"), {
+    core: true,
+    gui: true,
+    cli_package: true,
+    gui_package: true,
+    release_metadata: false,
+  });
+  delete fixture.event.pull_request;
+  fixture.event.ref = "refs/heads/main";
+  assert.deepEqual(fixture.plan("push"), {
+    core: true,
+    gui: true,
+    cli_package: false,
+    gui_package: false,
+    release_metadata: false,
+  });
+  fixture.files.splice(0, fixture.files.length, "packages/gui/src/App.tsx");
+  assert.deepEqual(fixture.plan("push"), {
+    core: false,
+    gui: true,
+    cli_package: false,
+    gui_package: false,
+    release_metadata: false,
+  });
+  assert.equal(fixture.plan("workflow_dispatch").gui_package, true);
+});
+
+test("release PRs skip builds but release merges package the changed products", () => {
+  const fixture = releaseFixture();
+  assert.deepEqual(fixture.plan("pull_request"), {
+    core: false,
+    gui: false,
+    cli_package: false,
+    gui_package: false,
+    release_metadata: true,
+  });
+  delete fixture.event.pull_request;
+  fixture.event.ref = "refs/heads/main";
+  assert.equal(fixture.plan("push").cli_package, true);
+  assert.equal(fixture.plan("push").gui_package, true);
+  // GUI-only release: no CLI artifact is required by publication.
+  fixture.after["packages/core/package.json"] = structuredClone(
+    fixture.before["packages/core/package.json"],
+  );
+  fixture.after[".release-please-manifest.json"]["packages/core"] = "1.10.0";
+  fixture.after["package-lock.json"].packages["packages/core"].version =
+    "1.10.0";
+  fixture.after["packages/gui/package.json"].dependencies[
+    "@fileconverter/core"
+  ] = "1.10.0";
+  fixture.after["package-lock.json"].packages["packages/gui"].dependencies[
+    "@fileconverter/core"
+  ] = "1.10.0";
+  assert.equal(fixture.plan("push").cli_package, false);
+  assert.equal(fixture.plan("push").gui_package, true);
+  fixture.files.push("packages/gui/src/App.tsx");
+  assert.equal(fixture.plan("push").gui_package, true);
+  fixture.after[".release-please-manifest.json"]["packages/gui"] = "9.0.0";
+  assert.throws(() => fixture.plan("push"), /Inconsistent release version/);
+});
+
+test("manifest formatting alone does not trigger release packaging", () => {
+  const fixture = releaseFixture();
+  delete fixture.event.pull_request;
+  fixture.event.ref = "refs/heads/main";
+  Object.assign(fixture.after, structuredClone(fixture.before));
+  fixture.files.splice(
+    0,
+    fixture.files.length,
+    ".release-please-manifest.json",
+  );
+  assert.equal(fixture.plan("push").cli_package, false);
+  assert.equal(fixture.plan("push").gui_package, false);
+});
+
+test("aggregate CI requires main GUI tests and required packages, and accepts intentional skips", () => {
+  const workflow = fs.readFileSync(
+    new URL("../.github/workflows/ci.yml", import.meta.url),
+    "utf8",
+  );
+  const script = workflow.split("node -e '")[1].split("'")[0];
+  const check = (outputs, results = {}) => {
+    const jobs = Object.fromEntries(
+      ["core", "gui-test", "cli-package", "gui-package"].map((name) => [
+        name,
+        { result: results[name] || "skipped" },
+      ]),
+    );
+    jobs.changes = { result: "success", outputs };
+    return spawnSync(process.execPath, ["-e", script], {
+      env: { ...process.env, RESULTS: JSON.stringify(jobs) },
+    }).status;
+  };
+  const main = {
+    core: "true",
+    gui: "true",
+    cli_package: "false",
+    gui_package: "false",
+  };
+  assert.equal(check(main, { core: "success", "gui-test": "success" }), 0);
+  assert.notEqual(check(main, { core: "success" }), 0);
+  assert.notEqual(check(main, { core: "success", "gui-test": "failure" }), 0);
+  const release = { ...main, cli_package: "true", gui_package: "true" };
+  assert.equal(
+    check(release, {
+      core: "success",
+      "cli-package": "success",
+      "gui-package": "success",
+    }),
+    0,
+  );
+  assert.notEqual(
+    check(release, { core: "success", "cli-package": "success" }),
+    0,
+  );
+  assert.notEqual(
+    check(release, {
+      core: "success",
+      "cli-package": "success",
+      "gui-package": "cancelled",
+    }),
+    0,
+  );
+  assert.equal(
+    check({
+      core: "false",
+      gui: "false",
+      cli_package: "false",
+      gui_package: "false",
+    }),
+    0,
+  );
+});
 
 test("release-only PRs skip product jobs for independent and combined version bumps", () => {
   const fixture = releaseFixture();
