@@ -55,6 +55,8 @@ Every artifact records its product/version, embedded core version, platform, sou
 
 `release.yml` retains its filename for the existing npm trusted publisher configuration. It runs only after successful main push CI from this repository and skips outdated CI completions when main has moved ahead. release-please opens one combined release PR when both packages need updates.
 
+After release-please runs, the workflow checks whether its open release PR is behind `main` and asks GitHub to update the branch. This keeps the PR mergeable under strict branch protection without manual syncing, including after main commits that do not change either product version. The update uses `RELEASE_PLEASE_TOKEN` so the refreshed PR runs CI.
+
 After a checked release PR is merged:
 
 1. Main CI builds the release commit and uploads its verified artifacts.
