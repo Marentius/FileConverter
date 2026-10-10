@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.11.1](https://github.com/Marentius/FileConverter/compare/gui-v1.11.0...gui-v1.11.1) (2026-10-10)
+
+
+### Bug Fixes
+
+* **deps:** resolve npm audit vulnerabilities ([#177](https://github.com/Marentius/FileConverter/issues/177)) ([8006642](https://github.com/Marentius/FileConverter/commit/80066420937baa08cfdeea16c9ffeb9b5a718766))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @fileconverter/core bumped from 1.10.0 to 1.11.0
+
 ## [1.11.0](https://github.com/Marentius/FileConverter/compare/gui-v1.10.0...gui-v1.11.0) (2026-10-05)
 
 
