@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.11.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.10.0...fileconverter-v1.11.0) (2026-10-10)
+
+
+### Features
+
+* **images:** add AVIF output support via Sharp ([#174](https://github.com/Marentius/FileConverter/issues/174)) ([bfe0921](https://github.com/Marentius/FileConverter/commit/bfe0921b27d4465144f07abf332a13b29166bc0d))
+
+
+### Bug Fixes
+
+* **deps:** resolve npm audit vulnerabilities ([#177](https://github.com/Marentius/FileConverter/issues/177)) ([8006642](https://github.com/Marentius/FileConverter/commit/80066420937baa08cfdeea16c9ffeb9b5a718766))
+
 ## [1.10.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.9.0...fileconverter-v1.10.0) (2026-10-05)
 
 

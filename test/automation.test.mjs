@@ -4,13 +4,88 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
-import { affected } from "../scripts/ci-changes.mjs";
+import { spawnSync } from "node:child_process";
+import { affected, ciPlan } from "../scripts/ci-changes.mjs";
+import { releaseMetadataOnly } from "../scripts/release-metadata.mjs";
 import { selectRun } from "../scripts/release-ci.mjs";
 import { verify } from "../scripts/artifacts.mjs";
+import { updateReleasePrBranch } from "../scripts/update-release-pr-branch.mjs";
 import {
   desktopFiles,
   verifyDesktopFiles,
 } from "../scripts/desktop-artifacts.mjs";
+
+test("release branch updater refreshes only a behind first-party release PR", async () => {
+  const calls = [];
+  const pr = {
+    number: 176,
+    mergeable_state: "behind",
+    head: {
+      ref: "release-please--branches--main",
+      sha: "release-head-sha",
+      repo: { full_name: "Marentius/FileConverter" },
+    },
+    base: { ref: "main" },
+  };
+  const fetchImpl = async (url, options = {}) => {
+    calls.push({ url, options });
+    return calls.length === 1
+      ? { ok: true, json: async () => [pr] }
+      : { ok: true };
+  };
+
+  assert.deepEqual(
+    await updateReleasePrBranch({
+      repository: "Marentius/FileConverter",
+      token: "token",
+      fetchImpl,
+    }),
+    { status: "update-requested", number: 176 },
+  );
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1].options.method, "PUT");
+  assert.deepEqual(JSON.parse(calls[1].options.body), {
+    expected_head_sha: "release-head-sha",
+  });
+});
+
+test("release branch updater skips absent, current, and fork release PRs", async () => {
+  const firstPartyPr = {
+    number: 176,
+    mergeable_state: "clean",
+    head: {
+      ref: "release-please--branches--main",
+      sha: "head-sha",
+      repo: { full_name: "Marentius/FileConverter" },
+    },
+    base: { ref: "main" },
+  };
+  for (const pullRequests of [
+    [],
+    [firstPartyPr],
+    [
+      {
+        ...firstPartyPr,
+        head: {
+          ...firstPartyPr.head,
+          repo: { full_name: "someone/FileConverter" },
+        },
+      },
+    ],
+  ]) {
+    let calls = 0;
+    const result = await updateReleasePrBranch({
+      repository: "Marentius/FileConverter",
+      token: "token",
+      fetchImpl: async () => {
+        calls += 1;
+        return { ok: true, json: async () => pullRequests };
+      },
+    });
+    assert.equal(calls, 1);
+    assert.notEqual(result.status, "update-requested");
+  }
+});
 
 test("desktop promotion requires the installers for each OS and rejects legacy archives", () => {
   for (const platform of ["linux-x64", "win-x64", "macos-arm64"]) {
@@ -54,6 +129,306 @@ test("GUI changes do not run CLI jobs, engine changes also validate its GUI cons
     core: true,
     gui: true,
   });
+});
+
+function releaseFixture() {
+  const repo = { full_name: "Marentius/FileConverter" };
+  const event = {
+    repository: repo,
+    pull_request: {
+      head: { ref: "release-please--branches--main", repo },
+      base: { ref: "main" },
+    },
+  };
+  const metadata = (core, gui) => ({
+    "packages/core/package.json": {
+      name: "@fileconverter/core",
+      version: core,
+      scripts: { build: "tsup" },
+      dependencies: { sharp: "^0.35.5" },
+    },
+    "packages/gui/package.json": {
+      name: "@fileconverter/gui",
+      version: gui,
+      dependencies: { "@fileconverter/core": core, react: "^19.2.4" },
+    },
+    ".release-please-manifest.json": {
+      "packages/core": core,
+      "packages/gui": gui,
+    },
+    "package-lock.json": {
+      lockfileVersion: 3,
+      packages: {
+        "packages/core": { version: core },
+        "packages/gui": {
+          version: gui,
+          dependencies: { "@fileconverter/core": core, react: "^19.2.4" },
+        },
+        "node_modules/sharp": { version: "0.35.5", integrity: "sha512-tested" },
+      },
+    },
+  });
+  const before = metadata("1.10.0", "1.11.0");
+  const after = metadata("1.11.0", "1.11.1");
+  const files = [
+    ...Object.keys(after),
+    "packages/core/CHANGELOG.md",
+    "packages/gui/CHANGELOG.md",
+  ];
+  const classify = () =>
+    releaseMetadataOnly(
+      event,
+      files,
+      (file) => JSON.stringify(before[file]),
+      (file) => JSON.stringify(after[file]),
+    );
+  const plan = (eventName) =>
+    ciPlan(
+      eventName,
+      event,
+      files,
+      (file) => JSON.stringify(before[file]),
+      (file) => JSON.stringify(after[file]),
+    );
+  return { event, before, after, files, classify, plan };
+}
+
+test("ordinary PRs package products; ordinary main pushes only build and test", () => {
+  const fixture = releaseFixture();
+  fixture.event.pull_request.head.ref = "feature/example";
+  fixture.files.splice(0, fixture.files.length, "packages/core/src/cli.ts");
+  assert.deepEqual(fixture.plan("pull_request"), {
+    core: true,
+    gui: true,
+    cli_package: true,
+    gui_package: true,
+    release_metadata: false,
+  });
+  delete fixture.event.pull_request;
+  fixture.event.ref = "refs/heads/main";
+  assert.deepEqual(fixture.plan("push"), {
+    core: true,
+    gui: true,
+    cli_package: false,
+    gui_package: false,
+    release_metadata: false,
+  });
+  fixture.files.splice(0, fixture.files.length, "packages/gui/src/App.tsx");
+  assert.deepEqual(fixture.plan("push"), {
+    core: false,
+    gui: true,
+    cli_package: false,
+    gui_package: false,
+    release_metadata: false,
+  });
+  assert.equal(fixture.plan("workflow_dispatch").gui_package, true);
+});
+
+test("release PRs skip builds but release merges package the changed products", () => {
+  const fixture = releaseFixture();
+  assert.deepEqual(fixture.plan("pull_request"), {
+    core: false,
+    gui: false,
+    cli_package: false,
+    gui_package: false,
+    release_metadata: true,
+  });
+  delete fixture.event.pull_request;
+  fixture.event.ref = "refs/heads/main";
+  assert.equal(fixture.plan("push").cli_package, true);
+  assert.equal(fixture.plan("push").gui_package, true);
+  // GUI-only release: no CLI artifact is required by publication.
+  fixture.after["packages/core/package.json"] = structuredClone(
+    fixture.before["packages/core/package.json"],
+  );
+  fixture.after[".release-please-manifest.json"]["packages/core"] = "1.10.0";
+  fixture.after["package-lock.json"].packages["packages/core"].version =
+    "1.10.0";
+  fixture.after["packages/gui/package.json"].dependencies[
+    "@fileconverter/core"
+  ] = "1.10.0";
+  fixture.after["package-lock.json"].packages["packages/gui"].dependencies[
+    "@fileconverter/core"
+  ] = "1.10.0";
+  assert.equal(fixture.plan("push").cli_package, false);
+  assert.equal(fixture.plan("push").gui_package, true);
+  fixture.files.push("packages/gui/src/App.tsx");
+  assert.equal(fixture.plan("push").gui_package, true);
+  fixture.after[".release-please-manifest.json"]["packages/gui"] = "9.0.0";
+  assert.throws(() => fixture.plan("push"), /Inconsistent release version/);
+});
+
+test("manifest formatting alone does not trigger release packaging", () => {
+  const fixture = releaseFixture();
+  delete fixture.event.pull_request;
+  fixture.event.ref = "refs/heads/main";
+  Object.assign(fixture.after, structuredClone(fixture.before));
+  fixture.files.splice(
+    0,
+    fixture.files.length,
+    ".release-please-manifest.json",
+  );
+  assert.equal(fixture.plan("push").cli_package, false);
+  assert.equal(fixture.plan("push").gui_package, false);
+});
+
+test("aggregate CI requires main GUI tests and required packages, and accepts intentional skips", () => {
+  const workflow = fs.readFileSync(
+    new URL("../.github/workflows/ci.yml", import.meta.url),
+    "utf8",
+  );
+  const script = workflow.split("node -e '")[1].split("'")[0];
+  const check = (outputs, results = {}) => {
+    const jobs = Object.fromEntries(
+      ["core", "gui-test", "cli-package", "gui-package"].map((name) => [
+        name,
+        { result: results[name] || "skipped" },
+      ]),
+    );
+    jobs.changes = { result: "success", outputs };
+    return spawnSync(process.execPath, ["-e", script], {
+      env: { ...process.env, RESULTS: JSON.stringify(jobs) },
+    }).status;
+  };
+  const main = {
+    core: "true",
+    gui: "true",
+    cli_package: "false",
+    gui_package: "false",
+  };
+  assert.equal(check(main, { core: "success", "gui-test": "success" }), 0);
+  assert.notEqual(check(main, { core: "success" }), 0);
+  assert.notEqual(check(main, { core: "success", "gui-test": "failure" }), 0);
+  const release = { ...main, cli_package: "true", gui_package: "true" };
+  assert.equal(
+    check(release, {
+      core: "success",
+      "cli-package": "success",
+      "gui-package": "success",
+    }),
+    0,
+  );
+  assert.notEqual(
+    check(release, { core: "success", "cli-package": "success" }),
+    0,
+  );
+  assert.notEqual(
+    check(release, {
+      core: "success",
+      "cli-package": "success",
+      "gui-package": "cancelled",
+    }),
+    0,
+  );
+  assert.equal(
+    check({
+      core: "false",
+      gui: "false",
+      cli_package: "false",
+      gui_package: "false",
+    }),
+    0,
+  );
+});
+
+test("release-only PRs skip product jobs for independent and combined version bumps", () => {
+  const fixture = releaseFixture();
+  assert.equal(fixture.classify(), true);
+  fixture.after["packages/core/package.json"].version = "1.10.0";
+  fixture.after["packages/gui/package.json"].dependencies[
+    "@fileconverter/core"
+  ] = "1.10.0";
+  fixture.after[".release-please-manifest.json"]["packages/core"] = "1.10.0";
+  fixture.after["package-lock.json"].packages["packages/core"].version =
+    "1.10.0";
+  fixture.after["package-lock.json"].packages["packages/gui"].dependencies[
+    "@fileconverter/core"
+  ] = "1.10.0";
+  assert.equal(fixture.classify(), true);
+});
+
+test("ordinary PRs, fork PRs, main pushes, and manual runs retain product CI", () => {
+  const ordinary = releaseFixture();
+  ordinary.event.pull_request.head.ref = "fix/update-version";
+  assert.equal(ordinary.classify(), false);
+  const fork = releaseFixture();
+  fork.event.pull_request.head.repo = { full_name: "someone/FileConverter" };
+  assert.equal(fork.classify(), false);
+  const main = releaseFixture();
+  delete main.event.pull_request;
+  assert.equal(main.classify(), false);
+  assert.equal(
+    releaseMetadataOnly(
+      {},
+      [],
+      () => {},
+      () => {},
+    ),
+    false,
+  );
+  assert.deepEqual(affected(main.files), { core: true, gui: true });
+});
+
+test("release PRs with source, script, dependency, or lock integrity changes retain full CI", () => {
+  for (const file of [
+    "packages/core/src/cli.ts",
+    "package.json",
+    "scripts/package-cli.mjs",
+  ]) {
+    const fixture = releaseFixture();
+    fixture.files.push(file);
+    assert.equal(fixture.classify(), false);
+  }
+  for (const mutate of [
+    (f) => {
+      f.after["packages/core/package.json"].scripts.build = "other-command";
+    },
+    (f) => {
+      f.after["packages/core/package.json"].dependencies.sharp = "^0.36.0";
+    },
+    (f) => {
+      f.after["package-lock.json"].packages["node_modules/sharp"].version =
+        "0.36.0";
+    },
+    (f) => {
+      f.after["package-lock.json"].packages["node_modules/sharp"].integrity =
+        "sha512-other";
+    },
+  ]) {
+    const fixture = releaseFixture();
+    mutate(fixture);
+    assert.equal(fixture.classify(), false);
+  }
+});
+
+test("missing metadata and inconsistent release versions cannot skip product validation", () => {
+  for (const mutate of [
+    (f) => {
+      delete f.after["package-lock.json"];
+    },
+    (f) => {
+      f.after[".release-please-manifest.json"]["packages/gui"] = "9.0.0";
+    },
+    (f) => {
+      f.after["package-lock.json"].packages["packages/core"].version = "9.0.0";
+    },
+    (f) => {
+      f.after["packages/gui/package.json"].dependencies["@fileconverter/core"] =
+        "9.0.0";
+    },
+    (f) => {
+      f.after["package-lock.json"].packages["packages/gui"].dependencies[
+        "@fileconverter/core"
+      ] = "9.0.0";
+    },
+    (f) => {
+      f.after["packages/core/package.json"].version = "not-a-version";
+    },
+  ]) {
+    const fixture = releaseFixture();
+    mutate(fixture);
+    assert.equal(fixture.classify(), false);
+  }
 });
 test("promotion rejects wrong commit/version/product, tampering, and unrecorded files", () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "artifact-test-"));
