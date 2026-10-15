@@ -87,16 +87,18 @@ export class JobQueue extends EventEmitter {
 
       // Try retry if we haven't reached max attempts
       if (job.retryCount < job.maxRetries) {
+        const retryError = job.error;
         job.retryCount++;
         job.status = 'queued';
         job.startTime = undefined;
         job.endTime = undefined;
         job.duration = undefined;
         job.error = undefined;
+        this.emit('jobRetry', job);
 
         logger.warn(`Retry ${job.retryCount}/${job.maxRetries} for job ${job.id}`, {
           inputPath: job.plan.inputPath,
-          error: job.error
+          error: retryError
         });
 
                  // Add back to queue
@@ -105,7 +107,7 @@ export class JobQueue extends EventEmitter {
          });
       } else {
         this.emit('jobFailed', job);
-        logger.error(`Job ${job.id} failed after ${job.maxRetries} attempts`, {
+        logger.error(`Job ${job.id} failed after ${job.retryCount + 1} attempts`, {
           inputPath: job.plan.inputPath,
           error: job.error
         });
