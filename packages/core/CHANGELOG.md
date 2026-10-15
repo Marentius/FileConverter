@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.1](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.11.0...fileconverter-v1.11.1) (2026-10-15)
+
+
+### Bug Fixes
+
+* decode HEIC images without system codecs ([#181](https://github.com/Marentius/FileConverter/issues/181)) ([f110570](https://github.com/Marentius/FileConverter/commit/f1105705d002b0bbce1990f143db26aa3b6650a0))
+
 ## [1.11.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.10.0...fileconverter-v1.11.0) (2026-10-10)
 
 
