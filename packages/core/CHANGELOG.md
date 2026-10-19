@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.11.1...fileconverter-v1.12.0) (2026-10-19)
+
+
+### Features
+
+* **cli:** add shell completions for bash, zsh, and fish ([#175](https://github.com/Marentius/FileConverter/issues/175)) ([efb3b98](https://github.com/Marentius/FileConverter/commit/efb3b98b18c63424e6e260520ccf8721c22a8837))
+
 ## [1.11.1](https://github.com/Marentius/FileConverter/compare/fileconverter-v1.11.0...fileconverter-v1.11.1) (2026-10-15)
 
 
