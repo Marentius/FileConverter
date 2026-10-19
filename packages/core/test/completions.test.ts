@@ -50,6 +50,17 @@ describe('generateCompletionScript', () => {
     expect(script).toContain('compdef _tool tool');
   });
 
+  it.each([
+    [String.raw`convert:path:leaf`, String.raw`'convert\:path\:leaf:Convert'`],
+    [String.raw`convert\path\leaf`, String.raw`'convert\\path\\leaf:Convert'`],
+    [String.raw`convert\:path\:leaf`, String.raw`'convert\\\:path\\\:leaf:Convert'`],
+  ])('preserves the zsh command name %s in description entries', (name, entry) => {
+    const program = new Command().name('tool');
+    program.command(name).description('Convert');
+
+    expect(generateCompletionScript('zsh', program)).toContain(entry);
+  });
+
   it('uses file completion only for path-like fish options', () => {
     const script = generateCompletionScript('fish', sampleProgram(), values);
     expect(script).toContain("complete -c tool -n '__fish_seen_subcommand_from convert' -s i -l in -r -F -d 'Input file'");

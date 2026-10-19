@@ -175,8 +175,10 @@ function zshScript(root: CommandSpec, programName: string): string {
   const functions = flatten(root).map(spec => {
     const specs = spec.options.map(optionSpec);
     if (spec.commands.length > 0) {
-      const entries = spec.commands.map(sub =>
-        zshQuote(`${sub.path[sub.path.length - 1].replace(/:/g, '\\:')}:${sub.description}`));
+      const entries = spec.commands.map(sub => {
+        const name = sub.path[sub.path.length - 1].replace(/\\/g, '\\\\').replace(/:/g, '\\:');
+        return zshQuote(`${name}:${sub.description}`);
+      });
       const cases = spec.commands.map(sub => `        ${sub.path[sub.path.length - 1]}) ${fnName(sub)} ;;`);
       return `${fnName(spec)}() {
   local curcontext="$curcontext" state line
