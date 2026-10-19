@@ -1,7 +1,6 @@
 export function desktopFiles(platform, version) {
   const files = {
     "win-x64": [`FileConverter-Setup-${version}-win-x64.exe`],
-    "macos-arm64": [`FileConverter-${version}-macos-arm64.dmg`],
     "linux-x64": [
       `FileConverter-${version}-linux-x64.AppImage`,
       `FileConverter-${version}-linux-x64.deb`,

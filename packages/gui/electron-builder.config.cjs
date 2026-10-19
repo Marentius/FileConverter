@@ -23,19 +23,6 @@ module.exports = {
     runAfterFinish: true,
     deleteAppDataOnUninstall: false,
   },
-  mac: {
-    target: [{ target: "dmg", arch: ["arm64"] }],
-    category: "public.app-category.utilities",
-    icon: path.join(__dirname, "icons/icon.icns"),
-    artifactName: "FileConverter-${version}-macos-arm64.${ext}",
-  },
-  dmg: {
-    title: "FileConverter ${version}",
-    contents: [
-      { x: 130, y: 220, type: "file" },
-      { x: 410, y: 220, type: "link", path: "/Applications" },
-    ],
-  },
   linux: {
     target: [
       { target: "AppImage", arch: ["x64"] },

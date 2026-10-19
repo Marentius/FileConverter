@@ -3,14 +3,9 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { copyProductionModules, root } from "./locked-production.mjs";
-const names = { linux: "linux-x64", win32: "win-x64", darwin: "macos-arm64" };
+const names = { linux: "linux-x64", win32: "win-x64" };
 const name = names[process.platform];
-if (
-  !name ||
-  (process.platform === "darwin"
-    ? process.arch !== "arm64"
-    : process.arch !== "x64")
-)
+if (!name || process.arch !== "x64")
   throw new Error("Unsupported release platform.");
 const artifacts = path.join(root, "artifacts", `cli-${name}`);
 fs.mkdirSync(artifacts, { recursive: true });
