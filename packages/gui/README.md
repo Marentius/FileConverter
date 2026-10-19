@@ -54,15 +54,14 @@ This builds core and the renderer, then creates a platform-specific app under `p
 | Platform | Download | User flow |
 | --- | --- | --- |
 | Windows x64 | `FileConverter-Setup-X.Y.Z-win-x64.exe` | Run setup; the app opens and appears in the Start menu. No administrator rights required. Uninstall through Windows Settings. |
-| macOS Apple Silicon | `FileConverter-X.Y.Z-macos-arm64.dmg` | Open the disk image and drag FileConverter to Applications. |
 | Ubuntu/Debian x64 | `FileConverter-X.Y.Z-linux-x64.deb` | Open in the system package installer. The app appears in the applications menu. |
 | Other Linux x64 | `FileConverter-X.Y.Z-linux-x64.AppImage` | Allow execution in file properties, then open the single AppImage. No ZIP extraction. |
 
-Build separately on Windows, macOS, and Linux. Electron Forge prepares the existing locked application bundle, and electron-builder 26.15.3 creates NSIS, DMG, DEB and AppImage distributions from that exact bundle (`--prepackaged`). This replaces the ZIP maker without rebuilding the native conversion dependencies for Electron. electron-builder is a pinned build-only dependency; it provides one maintained installer tool across platforms.
+Official desktop installers are provided for Windows x64 and Linux x64. Build separately on Windows and Linux. Electron Forge prepares the existing locked application bundle, and electron-builder 26.15.3 creates NSIS, DEB and AppImage distributions from that exact bundle (`--prepackaged`). This replaces the ZIP maker without rebuilding the native conversion dependencies for Electron. electron-builder is a pinned build-only dependency; it provides one maintained installer tool across platforms.
 
-The desktop version belongs to `packages/gui/package.json` and releases use `gui-vX.Y.Z` tags. CI installs Windows/DEB packages, mounts the DMG, extracts the AppImage, and tests the installed bundled Node worker and an image conversion. Windows shortcuts and Linux desktop integration are also checked. Publication promotes these tested files with commit/version/hash verification.
+The desktop version belongs to `packages/gui/package.json` and releases use `gui-vX.Y.Z` tags. CI installs Windows/DEB packages, extracts the AppImage, and tests the installed bundled Node worker and an image conversion. Windows shortcuts and Linux desktop integration are also checked. Publication promotes these tested files with commit/version/hash verification.
 
-The Windows and macOS builds currently have no publisher signing credentials. Windows may display an unknown-publisher warning, and macOS distribution is not Developer ID signed/notarized. Installers simplify packaging; trusted publisher identities additionally require a Windows signing certificate and an Apple Developer ID/notarization setup. Do not describe unsigned builds as signed or instruct users to disable system security protections.
+Windows builds currently have no publisher signing credentials, so Windows may display an unknown-publisher warning. A trusted publisher identity requires a Windows signing certificate.
 
 The app uses Electron's native file and directory dialogs. The renderer has no Node.js access. Conversion runs in a separate bundled Node.js process through a small preload API. This keeps image processing isolated from the UI and avoids a known Sharp/Electron conflict on Linux.
 
@@ -81,4 +80,4 @@ npx shadcn@latest add dialog --cwd packages/gui
 npm run icons --workspace @fileconverter/gui
 ```
 
-`components.json` at the repository root exposes the registries to the shadcn MCP; `packages/gui/components.json` configures the renderer's aliases and component destinations. The icon source is `icons/brand.svg`; the icon script generates PNG, Windows ICO, and macOS ICNS assets from it.
+`components.json` at the repository root exposes the registries to the shadcn MCP; `packages/gui/components.json` configures the renderer's aliases and component destinations. The icon source is `icons/brand.svg`; the icon script generates PNG and Windows ICO assets from it.

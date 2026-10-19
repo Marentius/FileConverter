@@ -18,6 +18,12 @@ npm i -g @fileconverter/core
 converter convert -i photo.png -o output/ --to jpg
 ```
 
+### Packaged downloads
+
+Official CLI archives and desktop installers are available for **Windows x64 and Linux x64** in [GitHub Releases](https://github.com/Marentius/FileConverter/releases). See the [desktop installation guide](packages/gui/README.md#package) for installer formats.
+
+For macOS, use the npm CLI or build from source. Official macOS packages are no longer published.
+
 ### Build from source
 
 ```bash

@@ -4,7 +4,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
-import { spawnSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { affected, ciPlan } from "../scripts/ci-changes.mjs";
 import { releaseMetadataOnly } from "../scripts/release-metadata.mjs";
 import { selectRun } from "../scripts/release-ci.mjs";
@@ -88,7 +89,7 @@ test("release branch updater skips absent, current, and fork release PRs", async
 });
 
 test("desktop promotion requires the installers for each OS and rejects legacy archives", () => {
-  for (const platform of ["linux-x64", "win-x64", "macos-arm64"]) {
+  for (const platform of ["linux-x64", "win-x64"]) {
     const files = desktopFiles(platform, "1.10.0");
     assert.doesNotThrow(() => verifyDesktopFiles(files, platform, "1.10.0"));
     assert.throws(() => verifyDesktopFiles(files.slice(1), platform, "1.10.0"));
@@ -103,6 +104,150 @@ test("desktop promotion requires the installers for each OS and rejects legacy a
         "1.10.0",
       ),
     );
+  }
+  assert.throws(
+    () => desktopFiles("macos-arm64", "1.10.0"),
+    /Unsupported desktop platform/,
+  );
+});
+
+for (const product of ["cli", "gui"]) {
+  test(`${product} release promotion needs only Linux and Windows and verifies both`, () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "release-test-"));
+    try {
+      const repository = new URL("../", import.meta.url);
+      const versionOf = (workspace) =>
+        JSON.parse(
+          fs.readFileSync(
+            new URL(`packages/${workspace}/package.json`, repository),
+            "utf8",
+          ),
+        ).version;
+      const coreVersion = versionOf("core");
+      const version = product === "cli" ? coreVersion : versionOf("gui");
+      const sha = execFileSync("git", ["rev-parse", "HEAD"], {
+        cwd: repository,
+        encoding: "utf8",
+      }).trim();
+      const expected = [];
+      const platforms = ["linux-x64", "win-x64"];
+      for (const platform of platforms) {
+        const folder = path.join(directory, `${product}-${platform}`);
+        fs.mkdirSync(folder);
+        const names =
+          product === "gui"
+            ? desktopFiles(platform, version)
+            : [
+                `fileconverter-${platform}.tar.gz`,
+                ...(platform === "linux-x64"
+                  ? [`fileconverter-core-${version}.tgz`]
+                  : []),
+              ];
+        const files = names.map((name) => {
+          const data = `tested ${name}`;
+          const file = path.join(folder, name);
+          fs.writeFileSync(file, data);
+          expected.push(file);
+          return {
+            name,
+            sha256: createHash("sha256").update(data).digest("hex"),
+          };
+        });
+        fs.writeFileSync(
+          path.join(folder, "metadata.json"),
+          JSON.stringify({
+            product,
+            platform,
+            version,
+            coreVersion,
+            sha,
+            files,
+          }),
+        );
+      }
+      const promote = () =>
+        spawnSync(
+          process.execPath,
+          [
+            fileURLToPath(new URL("../scripts/artifacts.mjs", import.meta.url)),
+            "verify-release",
+            product,
+            directory,
+          ],
+          {
+            cwd: repository,
+            encoding: "utf8",
+            env: {
+              ...process.env,
+              CI_SHA: sha,
+              RELEASE_TAG: `${product === "cli" ? "fileconverter" : "gui"}-v${version}`,
+            },
+          },
+        );
+
+      const result = promote();
+      assert.equal(result.status, 0, result.stderr);
+      const manifest = JSON.parse(
+        fs.readFileSync(path.join(directory, "release-manifest.json"), "utf8"),
+      );
+      assert.equal(manifest.sha, sha);
+      assert.deepEqual(
+        manifest.files.map((file) => file.name).sort(),
+        expected.map((file) => path.basename(file)).sort(),
+      );
+      const uploads = JSON.parse(
+        fs.readFileSync(path.join(directory, `${product}-files.json`), "utf8"),
+      );
+      assert.deepEqual(
+        uploads.sort(),
+        [
+          ...expected,
+          path.join(directory, "SHA256SUMS.txt"),
+          path.join(directory, "release-manifest.json"),
+        ].sort(),
+      );
+
+      for (const platform of platforms) {
+        const folder = path.join(directory, `${product}-${platform}`);
+        fs.renameSync(folder, `${folder}-missing`);
+        assert.notEqual(promote().status, 0, `Must require ${platform}`);
+        fs.renameSync(`${folder}-missing`, folder);
+      }
+      fs.appendFileSync(expected[0], "tampered");
+      assert.notEqual(promote().status, 0, "Must verify artifact checksums");
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
+  });
+}
+
+test("release packagers reject macOS before packaging", () => {
+  for (const [script, args, message] of [
+    ["../scripts/package-cli.mjs", [], /Unsupported release platform/],
+    [
+      "../packages/gui/scripts/package.mjs",
+      ["make"],
+      /Desktop installers are only supported/,
+    ],
+  ]) {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "--eval",
+        `import { pathToFileURL } from "node:url";
+       Object.defineProperty(process, "platform", { value: "darwin" });
+       Object.defineProperty(process, "arch", { value: "arm64" });
+       const [script, ...args] = process.argv.slice(1);
+       process.argv = [process.execPath, script, ...args];
+       await import(pathToFileURL(script));`,
+        fileURLToPath(new URL(script, import.meta.url)),
+        ...args,
+      ],
+      { encoding: "utf8" },
+    );
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, message);
   }
 });
 test("GUI changes do not run CLI jobs, engine changes also validate its GUI consumer", () => {
@@ -454,6 +599,17 @@ test("promotion rejects wrong commit/version/product, tampering, and unrecorded 
     assert.throws(() => verify(directory, "gui", "2.1.0", "b".repeat(40)));
     assert.throws(() => verify(directory, "gui", "2.2.0", sha));
     assert.throws(() => verify(directory, "cli", "2.1.0", sha));
+    metadata.platform = "macos-arm64";
+    fs.writeFileSync(
+      path.join(directory, "metadata.json"),
+      JSON.stringify(metadata),
+    );
+    assert.throws(() => verify(directory, "gui", "2.1.0", sha));
+    metadata.platform = "linux-x64";
+    fs.writeFileSync(
+      path.join(directory, "metadata.json"),
+      JSON.stringify(metadata),
+    );
     fs.writeFileSync(path.join(directory, "extra.zip"), data);
     assert.throws(() => verify(directory, "gui", "2.1.0", sha));
     fs.unlinkSync(path.join(directory, "extra.zip"));

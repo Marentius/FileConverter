@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { desktopFiles, verifyDesktopFiles } from "./desktop-artifacts.mjs";
-const platforms = ["linux-x64", "win-x64", "macos-arm64"];
+const platforms = ["linux-x64", "win-x64"];
 const hash = (file) =>
   createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 const pkg = (product) =>

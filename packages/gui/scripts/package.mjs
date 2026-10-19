@@ -8,6 +8,14 @@ const action = process.argv[2];
 if (!["package", "make"].includes(action)) {
   throw new Error("Expected package or make.");
 }
+if (
+  action === "make" &&
+  (!["linux", "win32"].includes(process.platform) || process.arch !== "x64")
+) {
+  throw new Error(
+    "Desktop installers are only supported on Windows x64 and Linux x64.",
+  );
+}
 if (Number(process.versions.node.split(".")[0]) >= 26) {
   throw new Error(
     "Electron Forge packaging requires Node.js 22 or 24. Use Node.js 22 LTS.",
@@ -34,15 +42,11 @@ if (action === "make") {
   const builderCli = createRequire(import.meta.url).resolve(
     "electron-builder/out/cli/cli.js",
   );
-  const packaged = path.join(
+  const app = path.join(
     guiRoot,
     "out",
     `FileConverter-${process.platform}-${process.arch}`,
   );
-  const app =
-    process.platform === "darwin"
-      ? path.join(packaged, "FileConverter.app")
-      : packaged;
   // Distribution files are public application assets. A restrictive build umask
   // must not make a system-installed DEB readable only by its root owner.
   if (process.platform !== "win32") {

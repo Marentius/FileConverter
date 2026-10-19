@@ -29,21 +29,3 @@ await writeFile(
   new URL("icon.ico", icons),
   Buffer.concat([header, ...buffers]),
 );
-const chunks = await Promise.all(
-  [
-    ["ic07", 128],
-    ["ic08", 256],
-    ["ic09", 512],
-    ["ic10", 1024],
-  ].map(async ([type, size]) => {
-    const png = await sharp(svg).resize(size, size).png().toBuffer();
-    const chunk = Buffer.alloc(8);
-    chunk.write(type, 0, "ascii");
-    chunk.writeUInt32BE(png.length + 8, 4);
-    return Buffer.concat([chunk, png]);
-  }),
-);
-const icns = Buffer.alloc(8);
-icns.write("icns", 0, "ascii");
-icns.writeUInt32BE(8 + chunks.reduce((sum, chunk) => sum + chunk.length, 0), 4);
-await writeFile(new URL("icon.icns", icons), Buffer.concat([icns, ...chunks]));
