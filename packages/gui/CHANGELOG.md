@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.11.3](https://github.com/Marentius/FileConverter/compare/gui-v1.11.2...gui-v1.11.3) (2026-10-19)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @fileconverter/core bumped from 1.11.1 to 1.12.0
+
 ## [1.11.2](https://github.com/Marentius/FileConverter/compare/gui-v1.11.1...gui-v1.11.2) (2026-10-15)
 
 
