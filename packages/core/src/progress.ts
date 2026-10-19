@@ -1,6 +1,6 @@
 import cliProgress from 'cli-progress';
 import chalk from 'chalk';
-import { ConversionJob, JobStatus } from './types';
+import { ConversionJob } from './types';
 
 export class ProgressTracker {
   private progressBar: cliProgress.SingleBar;
@@ -9,6 +9,7 @@ export class ProgressTracker {
   private successfulJobs: number = 0;
   private failedJobs: number = 0;
   private runningJobs: number = 0;
+  private runningJobIds = new Set<string>();
 
   constructor() {
     this.progressBar = new cliProgress.SingleBar({
@@ -25,25 +26,24 @@ export class ProgressTracker {
     this.successfulJobs = 0;
     this.failedJobs = 0;
     this.runningJobs = 0;
+    this.runningJobIds.clear();
 
     console.log(chalk.blue(`\n🚀 Starting conversion of ${totalJobs} files...\n`));
-    this.progressBar.start(totalJobs, 0);
+    this.progressBar.start(totalJobs, 0, { successful: 0, failed: 0, running: 0 });
   }
 
   updateJobStatus(job: ConversionJob): void {
+    if (job.status === 'running') this.runningJobIds.add(job.id);
+    else this.runningJobIds.delete(job.id);
+    this.runningJobs = this.runningJobIds.size;
     switch (job.status) {
-      case 'running':
-        this.runningJobs++;
-        break;
       case 'success':
         this.completedJobs++;
         this.successfulJobs++;
-        this.runningJobs = Math.max(0, this.runningJobs - 1);
         break;
       case 'failed':
         this.completedJobs++;
         this.failedJobs++;
-        this.runningJobs = Math.max(0, this.runningJobs - 1);
         break;
     }
 

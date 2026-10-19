@@ -152,6 +152,9 @@ export class Converter {
     jobQueue.on('jobStarted', (job) => {
       if (!quiet) progressTracker.updateJobStatus(job);
     });
+    jobQueue.on('jobRetry', (job) => {
+      if (!quiet) progressTracker.updateJobStatus(job);
+    });
     
     jobQueue.on('jobCompleted', (job) => {
       if (!quiet) progressTracker.updateJobStatus(job);

@@ -34,8 +34,18 @@ export class SharpAdapter extends BaseAdapter {
 
       logger.debug(`Sharp adapter: Starting conversion`, { inputPath: plan.inputPath, outputFormat: plan.outputFormat });
 
-      // Start med Sharp
-      let sharpInstance = sharp(plan.inputPath);
+      // Sharp's prebuilt binaries do not include an HEVC decoder. Decode HEIC
+      // with the bundled WebAssembly codec, then use Sharp for output/options.
+      let sharpInstance: ReturnType<typeof sharp>;
+      if (plan.inputFormat.toLowerCase() === 'heic') {
+        const { default: decodeHeic } = await import('heic-decode');
+        const image = await decodeHeic({ buffer: await fs.promises.readFile(plan.inputPath) });
+        sharpInstance = sharp(Buffer.from(image.data), {
+          raw: { width: image.width, height: image.height, channels: 4 }
+        });
+      } else {
+        sharpInstance = sharp(plan.inputPath);
+      }
       logger.debug(`Sharp adapter: Created Sharp instance`);
 
       // Resize hvis nødvendig
